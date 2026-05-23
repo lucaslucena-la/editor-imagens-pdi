@@ -61,6 +61,20 @@ class JanelaPrincipal(QMainWindow):
         # Adiciona a ação "Abrir" ao menu "Arquivo"
         menu_arquivo.addAction(acao_abrir)
 
+        # Ação "Salvar"
+        acao_salvar = QAction("Salvar Imagem", self)
+        acao_salvar.triggered.connect(self.salvar_imagem)
+
+        # Adiciona a ação "Salvar" ao menu "Arquivo"
+        menu_arquivo.addAction(acao_salvar)
+
+        # Ação "Resetar"
+        acao_resetar = QAction("Resetar Imagem", self)
+        acao_resetar.triggered.connect(self.resetar_imagem)
+
+        # Adiciona a ação "Resetar" ao menu "Arquivo"
+        menu_arquivo.addAction(acao_resetar)
+
     def abrir_imagem(self):
         """
         Abre uma imagem escolhida pelo usuário.
@@ -93,3 +107,32 @@ class JanelaPrincipal(QMainWindow):
 
         # Exibe a imagem no QLabel
         self.label_imagem.setPixmap(pixmap)
+
+    def salvar_imagem(self):
+        """
+        Salva a imagem atual.
+        """
+        # Verifica se existe imagem carregada
+        if self.gerenciador_imagem.imagem_atual is not None:
+            return
+
+        # Abre janela de salvamento de arquivo
+        caminho_imagem, _ = QFileDialog.getSaveFileName(self, "Salvar Imagem", "", "Imagens (*.png *.jpg *.jpeg)")
+
+        # verifica se o usuário selecionou um caminho
+        if caminho_imagem:
+
+            # Salva a imagem usando o gerenciador de imagens
+            self.gerenciador_imagem.salvar_imagem(caminho_imagem)
+
+    def resetar_imagem(self):
+        """
+        Restaura a imagem atual para a imagem original.
+        """
+
+        # Restaura a imagem usando o gerenciador de imagens
+        self.gerenciador_imagem.resetar_imagem()
+
+        # Exibe a imagem restaurada na interface
+        self.exibir_imagem()
+        

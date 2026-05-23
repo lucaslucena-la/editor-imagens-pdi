@@ -38,3 +38,25 @@ class GerenciadorImagens:
 
         # Define a imagem atual como a original
         self.imagem_atual = self.imagem_original.copy()
+
+    def salvar_imagem(self, caminho):
+        """
+        Salva a imagem atual no disco.
+        """
+
+        # Verifica se existe imagem carregada
+        if self.imagem_atual is not None:
+
+            # Salva imagem utilizando OpenCV
+            cv2.imwrite(caminho, self.imagem_atual)
+
+    def resetar_imagem(self):
+        """
+        Restaura a imagem atual para a imagem original.
+        """
+
+        # Verifica se existe imagem original carregada
+        if self.imagem_original is not None:
+
+            # Restaura a imagem atual para a original
+            self.imagem_atual = self.imagem_original.copy()
