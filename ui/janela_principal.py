@@ -14,7 +14,8 @@ from PyQt5.QtCore import Qt
 
 from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
-from processing.intensidade import aplicar_negativo
+from processing.intensidade import aplicar_negativo, ajustar_brilho
+from PyQt5.QtWidgets import QInputDialog
 
 from PyQt5.QtWidgets import QMessageBox
 
@@ -88,6 +89,19 @@ class JanelaPrincipal(QMainWindow):
         # Adiciona a ação "Negativo" ao menu "Transformações"
         menu_transformacoes.addAction(acao_negativo)
 
+        # Ação "Aumentar Brilho"
+        acao_aumentar_brilho = QAction("Aumentar Brilho", self)
+        acao_aumentar_brilho.triggered.connect(self.aumentar_brilho)
+
+        # Adiciona a ação "Aumentar Brilho" ao menu "Transformações"
+        menu_transformacoes.addAction(acao_aumentar_brilho)
+
+        # Ação "Diminuir Brilho"
+        acao_diminuir_brilho = QAction("Diminuir Brilho", self)
+        acao_diminuir_brilho.triggered.connect(self.diminuir_brilho)    
+
+        # Adiciona a ação "Diminuir Brilho" ao menu "Transformações"
+        menu_transformacoes.addAction(acao_diminuir_brilho)
 
 
     def abrir_imagem(self):
@@ -182,3 +196,50 @@ class JanelaPrincipal(QMainWindow):
 
         # Exibe a imagem modificada na interface
         self.exibir_imagem()
+
+    # método genério de ajuste de brilho
+    def aplicar_brilho(self, valor):
+        """
+        Aplica ajuste de brilho na imagem atual.
+
+        Args:
+            valor (int): Valor a ser adicionado aos pixels para ajustar o brilho. Pode ser positivo ou negativo.
+        """
+
+        # Obtem a imagem atual do gerenciador de imagens
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        # Verifica se existe imagem carregada
+        if imagem is None:
+            return
+
+        # Aplica o ajuste de brilho usando a função do módulo de processamento
+        imagem_brilho = ajustar_brilho(imagem, valor)
+
+        # Atualiza a imagem atual no gerenciador
+        self.gerenciador_imagem.imagem_atual = imagem_brilho
+
+        # Exibe a imagem modificada na interface
+        self.exibir_imagem()
+
+    def aumentar_brilho(self):
+        """
+        Aumenta o brilho da imagem atual.
+        """
+
+        valor, ok = QInputDialog.getInt(self, "Aumentar Brilho", "Valor de brilho:", 30, 0, 255)
+
+        if ok:
+            # Aplica ajuste de brilho positivo
+            self.aplicar_brilho(valor)
+
+    def diminuir_brilho(self):
+        """
+        Diminui o brilho da imagem atual.
+        """
+
+        valor, ok = QInputDialog.getInt(self, "Diminuir Brilho", "Valor de brilho:", 30, 0, 255)
+
+        if ok:
+            # Aplica ajuste de brilho negativo
+            self.aplicar_brilho(-valor)
