@@ -14,6 +14,9 @@ from PyQt5.QtCore import Qt
 
 from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
+from processing.intensidade import aplicar_negativo
+
+from PyQt5.QtWidgets import QMessageBox
 
 class JanelaPrincipal(QMainWindow):
     """
@@ -54,6 +57,9 @@ class JanelaPrincipal(QMainWindow):
         # Menu "Arquivo"
         menu_arquivo = barra_menu.addMenu("Arquivo")
 
+        # Menu Transformações
+        menu_transformacoes = barra_menu.addMenu("Transformações")
+
         # Ação "Abrir"
         acao_abrir = QAction("Abrir Imagem", self)
         acao_abrir.triggered.connect(self.abrir_imagem)
@@ -74,6 +80,15 @@ class JanelaPrincipal(QMainWindow):
 
         # Adiciona a ação "Resetar" ao menu "Arquivo"
         menu_arquivo.addAction(acao_resetar)
+
+        # Ação "Negativo"
+        acao_negativo = QAction("Negativo", self)
+        acao_negativo.triggered.connect(self.aplicar_negativo)
+
+        # Adiciona a ação "Negativo" ao menu "Transformações"
+        menu_transformacoes.addAction(acao_negativo)
+
+
 
     def abrir_imagem(self):
         """
@@ -112,8 +127,8 @@ class JanelaPrincipal(QMainWindow):
         """
         Salva a imagem atual.
         """
-        # Verifica se existe imagem carregada
-        if self.gerenciador_imagem.imagem_atual is not None:
+        # Verifica se não existe imagem carregada
+        if self.gerenciador_imagem.imagem_atual is None:
             return
 
         # Abre janela de salvamento de arquivo
@@ -124,6 +139,13 @@ class JanelaPrincipal(QMainWindow):
 
             # Salva a imagem usando o gerenciador de imagens
             self.gerenciador_imagem.salvar_imagem(caminho_imagem)
+
+            # Exibe mensagem de sucesso
+            QMessageBox.information(
+                self,
+                "Imagem salva",
+                f"Imagem salva com sucesso em:\n{caminho_imagem}"
+            )
 
     def resetar_imagem(self):
         """
@@ -140,3 +162,23 @@ class JanelaPrincipal(QMainWindow):
         # Exibe a imagem restaurada na interface
         self.exibir_imagem()
 
+    def aplicar_negativo(self):
+        """
+        Aplica o efeito de negativo na imagem atual.
+        """
+
+        # Obtem a imagem atual do gerenciador de imagens
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        # Verifica se existe imagem carregada
+        if imagem is None:
+            return
+
+        # Aplica o efeito de negativo usando a função do módulo de processamento
+        imagem_negativa = aplicar_negativo(imagem)
+
+        # Atualiza a imagem atual no gerenciador
+        self.gerenciador_imagem.imagem_atual = imagem_negativa
+
+        # Exibe a imagem modificada na interface
+        self.exibir_imagem()
