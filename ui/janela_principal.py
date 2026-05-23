@@ -13,6 +13,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
 from core.gerenciador_imagens import GerenciadorImagens
+from utils.conversoes import cv2_to_qt
 
 class JanelaPrincipal(QMainWindow):
     """
@@ -74,15 +75,18 @@ class JanelaPrincipal(QMainWindow):
             self.gerenciador_imagem.carregar_imagem(caminho_imagem)
 
             # Exibe a imagem na interface
-            self.exibir_imagem(caminho_imagem)
+            self.exibir_imagem()
 
-    def exibir_imagem(self, caminho_imagem):
+    def exibir_imagem(self):
         """
-        Exibe a imagem carregada na interface.
+        Exibe a imagem atual na interface.
         """
+
+        # Obtém a imagem atual do gerenciador
+        imagem = self.gerenciador_imagem.obter_imagem_atual
 
         # cria objeto de imagem do Qt a partir do caminho da imagem carregada
-        pixmap = QPixmap(caminho_imagem)
+        pixmap = cv2_to_qt(imagem)
 
         # Ajusta o tamanho da imagem para caber na área de exibição
         pixmap = pixmap.scaled(self.label_imagem.width(), self.label_imagem.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
