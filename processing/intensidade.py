@@ -52,3 +52,25 @@ def ajustar_brilho(imagem, valor):
 
     # Converte de volta para uint8
     return imagem_brilho.astype(np.uint8)
+
+def ajustar_contraste(imagem, fator):
+    """
+    Ajusta o contraste da imagem.
+
+    fator > 1  -> aumenta contraste
+    0 < fator < 1 -> reduz contraste
+    """
+    # Converte a imagem para tipo float32 para evitar overflow
+    imagem_float = imagem.astype(np.float32)
+
+    # Calcula o valor médio dos pixels para cada canal (R, G, B)
+    media = np.mean(imagem_float, axis=(0, 1), keepdims=True)
+
+    # Ajusta o contraste usando a fórmula: pixel_contraste = (pixel - media) * fator + media
+    imagem_contraste = (imagem_float - media) * fator + media
+
+    # Limita os valores dos pixels para o intervalo [0, 255]
+    imagem_contraste = np.clip(imagem_contraste, 0, 255)
+
+    # Converte de volta para uint8
+    return imagem_contraste.astype(np.uint8)

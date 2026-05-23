@@ -14,10 +14,12 @@ from PyQt5.QtCore import Qt
 
 from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
-from processing.intensidade import aplicar_negativo, ajustar_brilho
+from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste
+from processing.reamostragem import redimensionar_vizinho_mais_proximo
 from PyQt5.QtWidgets import QInputDialog
-
 from PyQt5.QtWidgets import QMessageBox
+
+from ui.dialog_redimensionar import DialogRedimensionar
 
 class JanelaPrincipal(QMainWindow):
     """
@@ -61,6 +63,9 @@ class JanelaPrincipal(QMainWindow):
         # Menu Transformações
         menu_transformacoes = barra_menu.addMenu("Transformações")
 
+        # Menu Reamostragem
+        menu_reamostragem = barra_menu.addMenu("Reamostragem")
+
         # Ação "Abrir"
         acao_abrir = QAction("Abrir Imagem", self)
         acao_abrir.triggered.connect(self.abrir_imagem)
@@ -102,6 +107,22 @@ class JanelaPrincipal(QMainWindow):
 
         # Adiciona a ação "Diminuir Brilho" ao menu "Transformações"
         menu_transformacoes.addAction(acao_diminuir_brilho)
+
+        # Ação "Ajustar Contraste"
+        acao_ajustar_contraste = QAction("Ajustar Contraste", self)
+        acao_ajustar_contraste.triggered.connect(self.ajustar_contraste)
+
+        # Adiciona a ação "Ajustar Contraste" ao menu "Transformações"
+        menu_transformacoes.addAction(acao_ajustar_contraste)
+
+        # Ação "Redimensionar (Vizinho mais próximo)"
+        acao_redimensionar_vizinho = QAction("Redimensionar (Vizinho mais próximo)", self)
+        acao_redimensionar_vizinho.triggered.connect(self.redimensionar_vizinho)
+
+        # Adiciona a ação "Redimensionar (Vizinho mais próximo)" ao menu "Reamostragem"
+        menu_reamostragem.addAction(acao_redimensionar_vizinho)
+
+
 
 
     def abrir_imagem(self):
@@ -243,3 +264,62 @@ class JanelaPrincipal(QMainWindow):
         if ok:
             # Aplica ajuste de brilho negativo
             self.aplicar_brilho(-valor)
+
+    def ajustar_contraste(self):
+        """
+        Ajusta o contraste da imagem atual.
+        """
+
+        # obtém imagem atual do gerenciador de imagens
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        # Verifica se existe imagem carregada
+        if imagem is None:
+            return
+        
+        # Solicita ao usuário o fator de contraste
+        fator, ok = QInputDialog.getDouble(self, "Ajustar Contraste", "Fator de contraste (0.1 a 3.0):", 1.0, 0.1, 3.0, decimals=1)
+
+        if ok:
+            
+            # Aplica o ajuste de contraste usando a função do módulo de processamento
+            imagem_contraste = ajustar_contraste(imagem, fator)
+
+            # Atualiza a imagem atual no gerenciador
+            self.gerenciador_imagem.imagem_atual = imagem_contraste
+
+            # Exibe a imagem modificada na interface
+            self.exibir_imagem()
+
+    def redimensionar_vizinho(self):
+        """
+        Redimensiona a imagem atual usando o método do vizinho mais próximo.
+        """
+
+        # obtém imagem atual do gerenciador de imagens
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        # Verifica se existe imagem carregada
+        if imagem is None:
+            return
+        
+                # Obtém dimensões atuais
+        altura, largura = imagem.shape[:2]
+
+        # Cria janela de diálogo
+        dialog = DialogRedimensionar(largura,altura)
+
+        # Executa janela
+        if dialog.exec_():
+
+            # Obtém dimensões digitadas
+            nova_largura, nova_altura = (dialog.obter_dimensoes())
+
+            # Redimensiona imagem
+            imagem_redimensionada = (redimensionar_vizinho_mais_proximo(imagem,nova_largura,nova_altura))
+
+            # Atualiza imagem atual
+            self.gerenciador_imagem.imagem_atual = (imagem_redimensionada)
+
+            # Atualiza interface
+            self.exibir_imagem()
