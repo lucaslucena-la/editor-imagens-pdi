@@ -97,7 +97,7 @@ class JanelaPrincipal(QMainWindow):
         """
 
         # Obtém a imagem atual do gerenciador
-        imagem = self.gerenciador_imagem.obter_imagem_atual
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
 
         # cria objeto de imagem do Qt a partir do caminho da imagem carregada
         pixmap = cv2_to_qt(imagem)
@@ -130,9 +130,13 @@ class JanelaPrincipal(QMainWindow):
         Restaura a imagem atual para a imagem original.
         """
 
+        # Verifica se existe imagem carregada
+        if self.gerenciador_imagem.imagem_original is None:
+            return
+
         # Restaura a imagem usando o gerenciador de imagens
         self.gerenciador_imagem.resetar_imagem()
 
         # Exibe a imagem restaurada na interface
         self.exibir_imagem()
-        
+

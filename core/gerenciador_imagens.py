@@ -60,3 +60,10 @@ class GerenciadorImagens:
 
             # Restaura a imagem atual para a original
             self.imagem_atual = self.imagem_original.copy()
+
+    def obter_imagem_atual(self):
+        """
+        Retorna a imagem atualmente exibida.
+        """
+
+        return self.imagem_atual
