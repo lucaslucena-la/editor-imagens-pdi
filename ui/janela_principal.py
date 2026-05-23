@@ -1,0 +1,91 @@
+"""
+Janela principal da aplicação.
+
+Responsável por:
+- menus
+- exibição da imagem
+- interação do usuário
+"""
+
+from PyQt5.QtWidgets import QMainWindow, QLabel, QFileDialog, QAction
+
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt
+
+from core.gerenciador_imagens import GerenciadorImagens
+
+class JanelaPrincipal(QMainWindow):
+    """
+      Classe que representa a janela principal da aplicação.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+
+        # Classe responsável pelas imagens
+        self.gerenciador_imagem = GerenciadorImagens()
+
+        # configurações iniciais da janela
+        self.setWindowTitle("Editor de Imagens")
+        self.setGeometry(100, 100, 1000, 700)
+
+        # Área onde a imagem será exibida
+        self.label_imagem = QLabel(self)
+
+        # centraliza a imagem na janela
+        self.label_imagem.setAlignment(Qt.AlignCenter)
+
+        # Define o QLabel como widget central da janela
+        self.setCentralWidget(self.label_imagem)
+
+        # Cria o menu da interface
+        self.criar_menu()
+
+    def criar_menu(self):
+        """
+        Cria os menus superiores da aplicação.
+        """
+
+        # Barra de menu
+        barra_menu = self.menuBar()
+
+        # Menu "Arquivo"
+        menu_arquivo = barra_menu.addMenu("Arquivo")
+
+        # Ação "Abrir"
+        acao_abrir = QAction("Abrir Imagem", self)
+        acao_abrir.triggered.connect(self.abrir_imagem)
+
+        # Adiciona a ação "Abrir" ao menu "Arquivo"
+        menu_arquivo.addAction(acao_abrir)
+
+    def abrir_imagem(self):
+        """
+        Abre uma imagem escolhida pelo usuário.
+        """
+        # Abre janela de seleção de arquivo
+        caminho_imagem, _ = QFileDialog.getOpenFileName(self, "Selecionar Imagem", "", "Imagens (*.png *.jpg *.jpeg)")
+
+        # verifica se o usuário selecionou um arquivo
+        if caminho_imagem:
+
+            # Carrega a imagem usando o gerenciador de imagens
+            self.gerenciador_imagem.carregar_imagem(caminho_imagem)
+
+            # Exibe a imagem na interface
+            self.exibir_imagem(caminho_imagem)
+
+    def exibir_imagem(self, caminho_imagem):
+        """
+        Exibe a imagem carregada na interface.
+        """
+
+        # cria objeto de imagem do Qt a partir do caminho da imagem carregada
+        pixmap = QPixmap(caminho_imagem)
+
+        # Ajusta o tamanho da imagem para caber na área de exibição
+        pixmap = pixmap.scaled(self.label_imagem.width(), self.label_imagem.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+        # Exibe a imagem no QLabel
+        self.label_imagem.setPixmap(pixmap)
