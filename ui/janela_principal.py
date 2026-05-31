@@ -7,18 +7,15 @@ Responsável por:
 - interação do usuário
 """
 
-from PyQt5.QtWidgets import QMainWindow, QLabel, QFileDialog, QAction
+from PyQt5.QtWidgets import QMainWindow, QLabel, QFileDialog, QAction, QMessageBox,QInputDialog, QApplication
 
-from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
 from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
 from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste
 from processing.reamostragem import redimensionar_vizinho_mais_proximo
-from PyQt5.QtWidgets import QInputDialog
-from PyQt5.QtWidgets import QMessageBox
-
+from processing.convolucao import aplicar_box_3x3
 from ui.dialog_redimensionar import DialogRedimensionar
 
 class JanelaPrincipal(QMainWindow):
@@ -122,8 +119,15 @@ class JanelaPrincipal(QMainWindow):
         # Adiciona a ação "Redimensionar (Vizinho mais próximo)" ao menu "Reamostragem"
         menu_reamostragem.addAction(acao_redimensionar_vizinho)
 
+        # Menu "Filtros"
+        menu_filtros = barra_menu.addMenu("Filtros")
 
+        # Ação "Filtro Box 3x3"
+        acao_filtro_box = QAction("Filtro Box 3x3", self)
+        acao_filtro_box.triggered.connect(self.aplicar_box_3x3)
 
+        # Adiciona a ação "Filtro Box 3x3" ao menu "Filtros"
+        menu_filtros.addAction(acao_filtro_box)
 
     def abrir_imagem(self):
         """
@@ -218,7 +222,6 @@ class JanelaPrincipal(QMainWindow):
         # Exibe a imagem modificada na interface
         self.exibir_imagem()
 
-    # método genério de ajuste de brilho
     def aplicar_brilho(self, valor):
         """
         Aplica ajuste de brilho na imagem atual.
@@ -228,14 +231,23 @@ class JanelaPrincipal(QMainWindow):
         """
 
         # Obtem a imagem atual do gerenciador de imagens
-        imagem = self.gerenciador_imagem.obter_imagem_atual()
+        imagem_base = self.gerenciador_imagem.imagem_original
 
         # Verifica se existe imagem carregada
-        if imagem is None:
+        if imagem_base is None:
             return
+        
+        # Acumula o offset de brilho
+        self.gerenciador_imagem.offset_brilho += valor
+        
+        # Limita faixa para evitar valores extremos
+        if self.gerenciador_imagem.offset_brilho > 255:
+            self.gerenciador_imagem.offset_brilho = 255
+        elif self.gerenciador_imagem.offset_brilho < -255:
+            self.gerenciador_imagem.offset_brilho = -255
 
-        # Aplica o ajuste de brilho usando a função do módulo de processamento
-        imagem_brilho = ajustar_brilho(imagem, valor)
+        # Recalcula sempre a partir da imagem original
+        imagem_brilho = ajustar_brilho(imagem_base, self.gerenciador_imagem.offset_brilho)
 
         # Atualiza a imagem atual no gerenciador
         self.gerenciador_imagem.imagem_atual = imagem_brilho
@@ -271,25 +283,46 @@ class JanelaPrincipal(QMainWindow):
         """
 
         # obtém imagem atual do gerenciador de imagens
-        imagem = self.gerenciador_imagem.obter_imagem_atual()
+        imagem_base = self.gerenciador_imagem.imagem_original
 
         # Verifica se existe imagem carregada
-        if imagem is None:
+        if imagem_base is None:
             return
         
-        # Solicita ao usuário o fator de contraste
-        fator, ok = QInputDialog.getDouble(self, "Ajustar Contraste", "Fator de contraste (0.1 a 3.0):", 1.0, 0.1, 3.0, decimals=1)
+        # # Fator percentual: negativo diminui, positivo aumenta
+        # Ex.: +40 => aumenta; -40 => diminui
+        fator, ok = QInputDialog.getInt(self, "Ajustar Contraste", "Fator de contraste (-100 a 100):", 0, -100, 100)
 
-        if ok:
-            
-            # Aplica o ajuste de contraste usando a função do módulo de processamento
-            imagem_contraste = ajustar_contraste(imagem, fator)
+        if not ok:
+            return
 
-            # Atualiza a imagem atual no gerenciador
-            self.gerenciador_imagem.imagem_atual = imagem_contraste
+        # Acumula o offset de contraste
+        self.gerenciador_imagem.offset_contraste += fator
 
-            # Exibe a imagem modificada na interface
-            self.exibir_imagem()
+        # Limita faixa para evitar valores extremos
+        if self.gerenciador_imagem.offset_contraste > 200:
+            self.gerenciador_imagem.offset_contraste = 200
+        elif self.gerenciador_imagem.offset_contraste < -100:
+            self.gerenciador_imagem.offset_contraste = -100
+
+        # mapeita offset percentual para fator de contraste
+        # offset = 0   -> fator 1.0 (original)
+        # offset = +x  -> fator 1 + x/100
+        # offset = -x  -> fator 1/(1 + x/100)
+        offset = self.gerenciador_imagem.offset_contraste
+        if offset >= 0:
+            fator_contraste = 1.0 + (offset / 100.0)
+        else:
+            fator_contraste = 1.0 / (1.0 + abs(offset) / 100.0)
+
+        # Recalcula sempre a partir da imagem original
+        imagem_contraste = ajustar_contraste(imagem_base, fator_contraste)
+
+        # Atualiza a imagem atual no gerenciador
+        self.gerenciador_imagem.imagem_atual = imagem_contraste
+
+        # Exibe a imagem modificada na interface
+        self.exibir_imagem()
 
     def redimensionar_vizinho(self):
         """
@@ -323,3 +356,29 @@ class JanelaPrincipal(QMainWindow):
 
             # Atualiza interface
             self.exibir_imagem()
+
+    def aplicar_box_3x3(self):
+        """
+        Aplica filtro Box 3x3.
+        """
+
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        if imagem is None:
+            return
+
+        # Mostra cursor de espera
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        try:
+
+            imagem_filtrada = aplicar_box_3x3(imagem)
+
+            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
+
+            self.exibir_imagem()
+
+        finally:
+
+            # Restaura cursor normal
+            QApplication.restoreOverrideCursor()

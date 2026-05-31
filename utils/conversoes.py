@@ -8,10 +8,11 @@ entre OpenCV e PyQt.
 import cv2
 from PyQt5.QtGui import QImage, QPixmap
 
+# Converte imagem OpenCV (BGR) para QPixmap do PyQt
 def cv2_to_qt(cv_img):
     """
     Converte uma imagem OpenCV (BGR)
-    para QPixmap do PyQt.
+    para QPixmap do PyQt. 
     """
     # Converte de BGR para RGB
     imagem_rgb = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
