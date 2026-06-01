@@ -56,6 +56,13 @@ def kernel_box_3x3():
 
     return np.ones((3, 3),dtype=np.float32) / 9.0
 
+def kernel_box_5x5():
+    """
+    Retorna kernel Box 5x5.
+    """
+
+    return np.ones((5, 5), dtype=np.float32) / 25.0
+
 def aplicar_box_3x3(imagem):
     """
     Aplica filtro Box 3x3.
@@ -72,3 +79,22 @@ def aplicar_box_3x3(imagem):
 
     return resultado
 
+def aplicar_box_5x5(imagem):
+    """
+    Aplica filtro Box 5x5.
+    """
+
+    inicio = time.perf_counter()
+
+    kernel = kernel_box_5x5()
+
+    resultado = aplicar_convolucao(imagem, kernel)
+
+    fim = time.perf_counter()
+
+    print(
+        f"Tempo Box 5x5: "
+        f"{fim - inicio:.3f} segundos"
+    )
+
+    return resultado
