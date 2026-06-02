@@ -56,13 +56,6 @@ def kernel_box_3x3():
 
     return np.ones((3, 3),dtype=np.float32) / 9.0
 
-def kernel_box_5x5():
-    """
-    Retorna kernel Box 5x5.
-    """
-
-    return np.ones((5, 5), dtype=np.float32) / 25.0
-
 def aplicar_box_3x3(imagem):
     """
     Aplica filtro Box 3x3.
@@ -79,7 +72,15 @@ def aplicar_box_3x3(imagem):
 
     return resultado
 
+def kernel_box_5x5():
+    """
+    Retorna kernel Box 5x5.
+    """
+
+    return np.ones((5, 5), dtype=np.float32) / 25.0
+
 def aplicar_box_5x5(imagem):
+
     """
     Aplica filtro Box 5x5.
     """
@@ -94,6 +95,71 @@ def aplicar_box_5x5(imagem):
 
     print(
         f"Tempo Box 5x5: "
+        f"{fim - inicio:.3f} segundos"
+    )
+
+    return resultado
+
+def kernel_gaussiano_3x3():
+    """
+    Retorna kernel Gaussiano 3x3.
+    """
+
+    return np.array([
+        [1, 2, 1],
+        [2, 4, 2],
+        [1, 2, 1]], dtype=np.float32) / 16.0
+
+def aplicar_gaussiano_3x3(imagem):
+    """
+    Aplica filtro Gaussiano 3x3.
+    """
+
+    inicio = time.perf_counter()
+
+    kernel = kernel_gaussiano_3x3()
+
+    resultado = aplicar_convolucao(imagem, kernel)
+
+    fim = time.perf_counter()
+
+    print(
+        f"Tempo Gaussiano 3x3: "
+        f"{fim - inicio:.3f} segundos"
+    )
+
+    return resultado
+
+
+def kernel_gaussiano_5x5():
+    """
+    Retorna kernel Gaussiano 5x5.
+    """
+    return np.array(
+        [
+            [1,  4,  6,  4, 1],
+            [4, 16, 24, 16, 4],
+            [6, 24, 36, 24, 6],
+            [4, 16, 24, 16, 4],
+            [1,  4,  6,  4, 1],
+        ],
+        dtype=np.float32
+    ) / 256.0
+
+
+def aplicar_gaussiano_5x5(imagem):
+    """
+    Aplica filtro Gaussiano 5x5.
+    """
+    inicio = time.perf_counter()
+
+    kernel = kernel_gaussiano_5x5()
+    resultado = aplicar_convolucao(imagem, kernel)
+
+    fim = time.perf_counter()
+
+    print(
+        f"Tempo Gaussiano 5x5: "
         f"{fim - inicio:.3f} segundos"
     )
 

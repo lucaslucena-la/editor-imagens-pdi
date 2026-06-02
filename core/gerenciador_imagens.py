@@ -9,9 +9,6 @@ Responsável por:
 
 import cv2
 
-# Tamanho máximo permitido para processamento
-TAMANHO_MAXIMO = 1200
-
 class GerenciadorImagens:
     """
     Classe responsável por gerenciar as imagens da aplicação.
@@ -46,9 +43,6 @@ class GerenciadorImagens:
             raise ValueError("Não foi possível carregar a imagem."
         )
         
-        # Redimensiona se necessário
-        imagem = self._redimensionar_se_necessario(imagem)
-
         # Salva a cópia da imasgem original
         self.imagem_original = imagem.copy()
 
@@ -94,28 +88,3 @@ class GerenciadorImagens:
 
         return self.imagem_atual
     
-    def _redimensionar_se_necessario(self, imagem):
-        """
-        Redimensiona automaticamente imagens muito grandes.
-
-        Mantém a proporção original.
-        """
-
-        altura, largura = imagem.shape[:2]
-
-        # Verifica se a imagem ultrapassa o limite
-        if max(altura, largura) <= TAMANHO_MAXIMO:
-            return imagem
-        
-        # Calcula fator de redução
-        fator = TAMANHO_MAXIMO / max(altura, largura)
-
-        nova_largura = int(largura * fator)
-        nova_altura = int(altura * fator)
-
-        # Utiliza OpenCV apenas para reduzir a imagem
-        imagem_redimensionada = cv2.resize(imagem,(nova_largura, nova_altura),interpolation=cv2.INTER_AREA)
-
-        print(f"Imagem reduzida: "f"{largura}x{altura} -> "f"{nova_largura}x{nova_altura}")
-
-        return imagem_redimensionada

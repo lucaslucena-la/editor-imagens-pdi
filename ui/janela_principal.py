@@ -15,7 +15,7 @@ from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
 from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste
 from processing.reamostragem import redimensionar_vizinho_mais_proximo
-from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5
+from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5, aplicar_gaussiano_3x3, aplicar_gaussiano_5x5
 from ui.dialog_redimensionar import DialogRedimensionar
 
 class JanelaPrincipal(QMainWindow):
@@ -135,6 +135,20 @@ class JanelaPrincipal(QMainWindow):
 
         # Adiciona a ação "Filtro Box 5x5" ao menu "Filtros"
         menu_filtros.addAction(acao_filtro_box_5x5)
+
+        # Ação "Filtro Gaussiano 3x3"
+        acao_filtro_gaussiano_3x3 = QAction("Filtro Gaussiano 3x3", self)
+        acao_filtro_gaussiano_3x3.triggered.connect(self.aplicar_gaussiano_3x3)
+
+        # Adiciona a ação "Filtro Gaussiano 3x3" ao menu "Filtros"
+        menu_filtros.addAction(acao_filtro_gaussiano_3x3)
+
+        # Ação "Filtro Gaussiano 5x5"
+        acao_filtro_gaussiano_5x5 = QAction("Filtro Gaussiano 5x5", self)
+        acao_filtro_gaussiano_5x5.triggered.connect(self.aplicar_gaussiano_5x5)
+
+        # Adiciona a ação "Filtro Gaussiano 5x5" ao menu "Filtros"
+        menu_filtros.addAction(acao_filtro_gaussiano_5x5)
 
     def abrir_imagem(self):
         """
@@ -406,6 +420,58 @@ class JanelaPrincipal(QMainWindow):
         try:
 
             imagem_filtrada = aplicar_box_5x5(imagem)
+
+            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
+
+            self.exibir_imagem()
+
+        finally:
+
+            # Restaura cursor normal
+            QApplication.restoreOverrideCursor()
+
+    def aplicar_gaussiano_3x3(self):
+        """
+        Aplica filtro Gaussiano 3x3.
+        """
+
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        if imagem is None:
+            return
+
+        # Mostra cursor de espera
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        try:
+
+            imagem_filtrada = aplicar_gaussiano_3x3(imagem)
+
+            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
+
+            self.exibir_imagem()
+
+        finally:
+
+            # Restaura cursor normal
+            QApplication.restoreOverrideCursor()
+    
+    def aplicar_gaussiano_5x5(self):
+        """
+        Aplica filtro Gaussiano 5x5.
+        """
+
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        if imagem is None:
+            return
+
+        # Mostra cursor de espera
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        try:
+
+            imagem_filtrada = aplicar_gaussiano_5x5(imagem)
 
             self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
 
