@@ -13,9 +13,9 @@ from PyQt5.QtCore import Qt
 
 from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
-from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste
-from processing.reamostragem import redimensionar_vizinho_mais_proximo
-from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5, aplicar_gaussiano_3x3, aplicar_gaussiano_5x5
+from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste, transformacao_logaritmica, transformacao_exponencial
+from processing.reamostragem import redimensionar_vizinho_mais_proximo, redimensionar_bilinear
+from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5, aplicar_gaussiano_3x3, aplicar_gaussiano_5x5, aplicar_sobel
 from ui.dialog_redimensionar import DialogRedimensionar
 
 class JanelaPrincipal(QMainWindow):
@@ -112,12 +112,33 @@ class JanelaPrincipal(QMainWindow):
         # Adiciona a ação "Ajustar Contraste" ao menu "Transformações"
         menu_transformacoes.addAction(acao_ajustar_contraste)
 
+        # adiciona a ação "Transformação Logarítmica" ao menu "Transformações"
+        acao_transformacao_logaritmica = QAction("Transformação Logarítmica", self)
+        acao_transformacao_logaritmica.triggered.connect(self.aplicar_transformacao_logaritmica)
+        
+        # Adiciona a ação "Transformação Logarítmica" ao menu "Transformações"
+        menu_transformacoes.addAction(acao_transformacao_logaritmica)
+
+        # adiciona a ação "Transformação Exponencial" ao menu "Transformações"
+        acao_transformacao_exponencial = QAction("Transformação Exponencial", self)
+        acao_transformacao_exponencial.triggered.connect(self.aplicar_transformacao_exponencial)
+
+        # Adiciona a ação "Transformação Exponencial" ao menu "Transformações"
+        menu_transformacoes.addAction(acao_transformacao_exponencial)
+
         # Ação "Redimensionar (Vizinho mais próximo)"
         acao_redimensionar_vizinho = QAction("Redimensionar (Vizinho mais próximo)", self)
         acao_redimensionar_vizinho.triggered.connect(self.redimensionar_vizinho)
 
         # Adiciona a ação "Redimensionar (Vizinho mais próximo)" ao menu "Reamostragem"
         menu_reamostragem.addAction(acao_redimensionar_vizinho)
+
+        # Ação "Redimensionar (Bilinear)"
+        acao_redimensionar_bilinear = QAction("Redimensionar (Bilinear)", self)
+        acao_redimensionar_bilinear.triggered.connect(self.redimensionar_bilinear)
+
+        # Adiciona a ação "Redimensionar (Bilinear)" ao menu "Reamostragem"
+        menu_reamostragem.addAction(acao_redimensionar_bilinear)
 
         # Menu "Filtros"
         menu_filtros = barra_menu.addMenu("Filtros")
@@ -149,6 +170,13 @@ class JanelaPrincipal(QMainWindow):
 
         # Adiciona a ação "Filtro Gaussiano 5x5" ao menu "Filtros"
         menu_filtros.addAction(acao_filtro_gaussiano_5x5)
+
+        # Ação "Filtro Sobel"
+        acao_filtro_sobel = QAction("Filtro Sobel", self)
+        acao_filtro_sobel.triggered.connect(self.aplicar_sobel)
+
+        # Adiciona a ação "Filtro Sobel" ao menu "Filtros"
+        menu_filtros.addAction(acao_filtro_sobel)
 
     def abrir_imagem(self):
         """
@@ -345,6 +373,46 @@ class JanelaPrincipal(QMainWindow):
         # Exibe a imagem modificada na interface
         self.exibir_imagem()
 
+    def aplicar_transformacao_logaritmica(self):
+        """
+        Aplica transformação logarítmica.
+        """
+
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        if imagem is None:
+            return
+
+        imagem_transformada = (
+            transformacao_logaritmica(imagem)
+        )
+
+        self.gerenciador_imagem.imagem_atual = (
+            imagem_transformada
+        )
+
+        self.exibir_imagem()
+
+    def aplicar_transformacao_exponencial(self):
+        """
+        Aplica transformação exponencial.
+        """
+
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        if imagem is None:
+            return
+
+        imagem_transformada = (
+            transformacao_exponencial(imagem)
+        )
+
+        self.gerenciador_imagem.imagem_atual = (
+            imagem_transformada
+        )
+
+        self.exibir_imagem()
+
     def redimensionar_vizinho(self):
         """
         Redimensiona a imagem atual usando o método do vizinho mais próximo.
@@ -371,6 +439,39 @@ class JanelaPrincipal(QMainWindow):
 
             # Redimensiona imagem
             imagem_redimensionada = (redimensionar_vizinho_mais_proximo(imagem,nova_largura,nova_altura))
+
+            # Atualiza imagem atual
+            self.gerenciador_imagem.imagem_atual = (imagem_redimensionada)
+
+            # Atualiza interface
+            self.exibir_imagem()
+
+    def redimensionar_bilinear(self):
+        """
+        Redimensiona a imagem atual usando o método de interpolação bilinear.
+        """
+
+        # obtém imagem atual do gerenciador de imagens
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        # Verifica se existe imagem carregada
+        if imagem is None:
+            return
+        
+        # Obtém dimensões atuais
+        altura, largura = imagem.shape[:2]
+
+        # Cria janela de diálogo
+        dialog = DialogRedimensionar(largura,altura)
+
+        # Executa janela
+        if dialog.exec_():
+
+            # Obtém dimensões digitadas
+            nova_largura, nova_altura = (dialog.obter_dimensoes())
+
+            # Redimensiona imagem
+            imagem_redimensionada = (redimensionar_bilinear(imagem,nova_largura,nova_altura))
 
             # Atualiza imagem atual
             self.gerenciador_imagem.imagem_atual = (imagem_redimensionada)
@@ -481,3 +582,40 @@ class JanelaPrincipal(QMainWindow):
 
             # Restaura cursor normal
             QApplication.restoreOverrideCursor()
+
+    def aplicar_sobel(self):
+        """
+        Aplica filtro Sobel.
+        """
+
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        if imagem is None:
+            return
+
+        # Mostra cursor de espera
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        try:
+
+            imagem_filtrada = aplicar_sobel(imagem)
+
+            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
+
+            self.exibir_imagem()
+
+        finally:
+
+            # Restaura cursor normal
+            QApplication.restoreOverrideCursor()
+
+    
+
+
+
+
+
+
+
+
+

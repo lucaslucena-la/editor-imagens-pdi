@@ -74,3 +74,51 @@ def ajustar_contraste(imagem, fator):
 
     # Converte de volta para uint8
     return imagem_contraste.astype(np.uint8)
+
+def transformacao_logaritmica(imagem):
+    """
+    Aplica transformação logarítmica.
+
+    Realça regiões escuras da imagem e comprime
+    regiões muito claras.
+    """
+
+    # Converte a imagem para tipo float32 para evitar overflow
+    imagem_float = imagem.astype(np.float32)
+
+    # constante de escala para normalizar os valores dos pixels
+    c = 255 / np.log(1 + 255)
+
+    # Aplica a transformação logarítmica
+    imagem_logaritmica = c * np.log(1 + imagem_float)
+
+    # Limita os valores dos pixels para o intervalo [0, 255]
+    imagem_logaritmica = np.clip(imagem_logaritmica, 0, 255)
+
+    # Converte de volta para uint8
+    return imagem_logaritmica.astype(np.uint8)
+
+def transformacao_exponencial(imagem):
+    """
+    Aplica transformação exponencial.
+
+    Realça regiões claras da imagem e comprime
+    regiões escuras.
+    """
+
+    # Converte para float32
+    imagem_float = imagem.astype(np.float32)
+
+    # Normaliza para [0,1]
+    imagem_normalizada = imagem_float / 255.0
+
+    # Aplica transformação exponencial
+    imagem_exp = (np.exp(imagem_normalizada) - 1) / (np.e - 1)
+
+    # Retorna para [0,255]
+    imagem_exp *= 255.0
+
+    # Limita os valores
+    imagem_exp = np.clip(imagem_exp,0,255)
+
+    return imagem_exp.astype(np.uint8)

@@ -7,10 +7,21 @@ Responsável por:
 """
 
 import numpy as np
+"""
+Algoritmos de reamostragem de imagens.
+
+Responsável por:
+- vizinho mais próximo
+- bilinear
+"""
+
+import numpy as np
 
 def redimensionar_vizinho_mais_proximo(imagem, nova_largura, nova_altura):
+    
     """
-    Redimensiona uma imagem usando o método do vizinho mais próximo.
+    Redimensiona uma imagem usando o método do vizinho mais próximo
+    de forma vetorizada com NumPy (sem loops de pixels).
 
     Args:
         imagem (numpy.ndarray): Imagem de entrada.
@@ -24,28 +35,95 @@ def redimensionar_vizinho_mais_proximo(imagem, nova_largura, nova_altura):
     # obtém as dimensões da imagem original
     altura_original, largura_original = imagem.shape[:2]
 
-    # Cria uma nova imagem com as dimensões desejadas
-    if len(imagem.shape) == 3: # se a imagem for colorida (3 canais)
-        imagem_redimensionada = np.zeros((nova_altura, nova_largura, imagem.shape[2]), dtype=np.uint8) # mantém o número de canais da imagem original
-    else:
-        imagem_redimensionada = np.zeros((nova_altura, nova_largura), dtype=np.uint8) # imagem em escala de cinza (1 canal)
-
-    # Calcula os fatores de escala
-    escala_x  = largura_original / nova_largura
+    # calcula fatores de escala (mesma lógica da versão com loops)
+    escala_x = largura_original / nova_largura
     escala_y = altura_original / nova_altura
 
-    # Para cada pixel na nova imagem, calcula o pixel correspondente na imagem original
-    for y in range(nova_altura):
-        for x in range(nova_largura):
-            # Calcula as coordenadas correspondentes na imagem original
-            x_original = int(x * escala_x)
-            y_original = int(y * escala_y)
+    # cria os índices do grid de destino
+    x = np.arange(nova_largura)
+    y = np.arange(nova_altura)
 
-            # Garante que as coordenadas estejam dentro dos limites da imagem original
-            x_original = min(x_original, largura_original - 1)
-            y_original = min(y_original, altura_original - 1)
+    # cria a malha de coordenadas (cada posição do destino)
+    xx, yy = np.meshgrid(x, y)
 
-            # Atribui o valor do pixel correspondente da imagem original à nova imagem
-            imagem_redimensionada[y, x] = imagem[y_original, x_original]
+    # mapeia cada posição do destino para a posição na imagem original
+    # broadcasting: xx e yy (matrizes) são multiplicados por escala (escalares)
+    x_idx = (xx * escala_x).astype(np.int32)
+    y_idx = (yy * escala_y).astype(np.int32)
 
-    return imagem_redimensionada
+    # garante que os índices estejam dentro dos limites
+    x_idx = np.clip(x_idx, 0, largura_original - 1)
+    y_idx = np.clip(y_idx, 0, altura_original - 1)
+
+    # indexação vetorizada: obtém todos os pixels de uma vez
+    if len(imagem.shape) == 3:
+        imagem_redimensionada = imagem[y_idx, x_idx, :]
+    else:
+        imagem_redimensionada = imagem[y_idx, x_idx]
+
+    return imagem_redimensionada.astype(np.uint8)
+
+def redimensionar_bilinear(imagem, nova_largura, nova_altura):
+    """
+    Redimensiona uma imagem utilizando
+    interpolação bilinear vetorizada.
+
+    Utiliza:
+    - meshgrid
+    - broadcasting
+    - indexação avançada NumPy
+    """
+
+    # obtém as dimensões da imagem original
+    altura_original, largura_original = imagem.shape[:2]
+
+    # coordenadas do grid de destino
+    x = np.arange(nova_largura)
+    y = np.arange(nova_altura)
+
+    # cria a malha de coordenadas (cada posição do destino)
+    xx, yy = np.meshgrid(x, y)
+
+    # mapeia para coordenadas da imagem original
+    escala_x = xx * ((largura_original - 1) / max(nova_largura - 1,1))
+    escala_y = yy * ((altura_original - 1) / max(nova_altura - 1,1))
+
+    # coordenadas dos 4 pixels vizinhos
+    x1 = np.floor(escala_x).astype(np.int32)
+    y1 = np.floor(escala_y).astype(np.int32)
+
+    x2 = np.clip(x1 + 1, 0, largura_original - 1)
+    y2 = np.clip(y1 + 1, 0, altura_original - 1)
+
+    # Distâncias fracionárias
+    dx = escala_x - x1
+    dy = escala_y - y1
+
+    if len(imagem.shape) == 3:
+
+        dx = dx[..., None]  # (H,W,1)
+        dy = dy[..., None]  # (H,W,1)
+
+        # Obtém os 4 pixels vizinhos de forma vetorizada
+        p11 = imagem[y1, x1]  # (H,W,C)
+        p12 = imagem[y1, x2]  # (H,W,C) 
+        p21 = imagem[y2, x1]  # (H,W,C)
+        p22 = imagem[y2, x2]  # (H,W,C)
+
+    else:
+
+        # Imagem em escala de cinza
+        p11 = imagem[y1, x1]  # (H,W)
+        p12 = imagem[y1, x2]  # (H,W)
+        p21 = imagem[y2, x1]  # (H,W)
+        p22 = imagem[y2, x2]  # (H,W)
+    
+    # Interpolação bilinear
+    imagem_interpolada = (p11 * (1 - dx) * (1 - dy) +
+                            p12 * dx * (1 - dy) +
+                            p21 * (1 - dx) * dy +
+                            p22 * dx * dy)
+    
+    # Limita os valores entre 0 e 255
+    imagem_interpolada = np.clip(imagem_interpolada, 0, 255)
+    return imagem_interpolada.astype(np.uint8)
