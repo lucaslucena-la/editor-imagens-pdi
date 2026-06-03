@@ -229,3 +229,50 @@ def aplicar_sobel(imagem):
     resultado = np.clip(resultado, 0, 255).astype(np.uint8)
 
     return resultado
+
+def kernel_laplaciano():
+    """
+    Retorna kernel Laplaciano.
+
+    Destaca regiões onde ocorre
+    mudança brusca de intensidade.
+
+    """
+    return np.array(
+        [
+            [0,  1, 0],
+            [1, -4, 1],
+            [0,  1, 0]
+        ],
+        dtype=np.float32
+    )
+
+def aplicar_laplaciano(imagem):
+    """
+    Aplica filtro Laplaciano.
+    """
+    inicio = time.perf_counter()
+
+    kernel = kernel_laplaciano()
+    resultado = aplicar_convolucao(imagem, kernel, clip=False)
+
+    # O resultado do Laplaciano pode conter valores negativos, então pegamos o valor absoluto
+    resultado = np.abs(resultado)
+   
+    fim = time.perf_counter()
+
+    print(
+        f"Tempo Laplaciano: "
+        f"{fim - inicio:.3f} segundos"
+    )
+
+    resultado = np.clip(resultado, 0, 255).astype(np.uint8)
+
+    return resultado
+
+
+
+
+
+
+

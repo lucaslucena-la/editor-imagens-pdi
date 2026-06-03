@@ -15,7 +15,7 @@ from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
 from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste, transformacao_logaritmica, transformacao_exponencial
 from processing.reamostragem import redimensionar_vizinho_mais_proximo, redimensionar_bilinear
-from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5, aplicar_gaussiano_3x3, aplicar_gaussiano_5x5, aplicar_sobel
+from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5, aplicar_gaussiano_3x3, aplicar_gaussiano_5x5, aplicar_sobel, aplicar_laplaciano
 from ui.dialog_redimensionar import DialogRedimensionar
 
 class JanelaPrincipal(QMainWindow):
@@ -177,6 +177,16 @@ class JanelaPrincipal(QMainWindow):
 
         # Adiciona a ação "Filtro Sobel" ao menu "Filtros"
         menu_filtros.addAction(acao_filtro_sobel)
+
+        # Ação "Filtro Laplaciano"
+        acao_filtro_laplaciano = QAction("Filtro Laplaciano", self)
+        acao_filtro_laplaciano.triggered.connect(self.aplicar_laplaciano)
+
+        # Adiciona a ação "Filtro Laplaciano" ao menu "Filtros"
+        menu_filtros.addAction(acao_filtro_laplaciano)
+
+
+
 
     def abrir_imagem(self):
         """
@@ -609,7 +619,31 @@ class JanelaPrincipal(QMainWindow):
             # Restaura cursor normal
             QApplication.restoreOverrideCursor()
 
-    
+    def aplicar_laplaciano(self):
+        """
+        Aplica filtro Laplaciano.
+        """
+
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        if imagem is None:
+            return
+
+        # Mostra cursor de espera
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        try:
+
+            imagem_filtrada = aplicar_laplaciano(imagem)
+
+            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
+
+            self.exibir_imagem()
+
+        finally:
+
+            # Restaura cursor normal
+            QApplication.restoreOverrideCursor()
 
 
 
