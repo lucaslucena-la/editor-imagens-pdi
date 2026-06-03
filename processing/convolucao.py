@@ -270,8 +270,41 @@ def aplicar_laplaciano(imagem):
 
     return resultado
 
+def aplicar_mediana_3x3(imagem):
+    """
+    Aplica filtro mediana 3x3.
 
+    Utiliza:
+    - sliding_window_view
+    - broadcasting
+    - indexação avançada NumPy
+    """
+    
+    tamanho_kernel = 3
+    margem = tamanho_kernel // 2
 
+    # Verifica se a imagem é colorida
+    if len(imagem.shape) == 3:
+
+        # Imagem colorida
+        imagem_padded = np.pad(imagem, ((margem, margem), (margem, margem), (0, 0)), mode='edge')
+        
+        # (H, W, C, 3, 3)
+        janelas = sliding_window_view(imagem_padded, (tamanho_kernel, tamanho_kernel), axis=(0, 1))
+       
+        resultado = np.median(janelas, axis=(3, 4))
+    else:
+        # Imagem em escala de cinza
+        imagem_padded = np.pad(imagem, ((margem, margem), (margem, margem)), mode='edge')
+        
+        # (H, W, 3, 3)
+        janelas = sliding_window_view(imagem_padded, (tamanho_kernel, tamanho_kernel), axis=(0, 1))
+        
+        resultado = np.median(janelas, axis=(2, 3))
+
+    resultado = np.clip(resultado, 0, 255).astype(np.uint8)
+    return resultado
+    
 
 
 

@@ -15,7 +15,7 @@ from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
 from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste, transformacao_logaritmica, transformacao_exponencial
 from processing.reamostragem import redimensionar_vizinho_mais_proximo, redimensionar_bilinear
-from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5, aplicar_gaussiano_3x3, aplicar_gaussiano_5x5, aplicar_sobel, aplicar_laplaciano
+from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5, aplicar_gaussiano_3x3, aplicar_gaussiano_5x5, aplicar_sobel, aplicar_laplaciano, aplicar_mediana_3x3
 from ui.dialog_redimensionar import DialogRedimensionar
 
 class JanelaPrincipal(QMainWindow):
@@ -184,6 +184,13 @@ class JanelaPrincipal(QMainWindow):
 
         # Adiciona a ação "Filtro Laplaciano" ao menu "Filtros"
         menu_filtros.addAction(acao_filtro_laplaciano)
+
+        # Ação "Filtro Mediana 3x3"
+        acao_filtro_mediana_3x3 = QAction("Filtro Mediana 3x3", self)
+        acao_filtro_mediana_3x3.triggered.connect(self.aplicar_mediana_3x3)
+
+        # Adiciona a ação "Filtro Mediana 3x3" ao menu "Filtros"
+        menu_filtros.addAction(acao_filtro_mediana_3x3)
 
 
 
@@ -635,6 +642,32 @@ class JanelaPrincipal(QMainWindow):
         try:
 
             imagem_filtrada = aplicar_laplaciano(imagem)
+
+            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
+
+            self.exibir_imagem()
+
+        finally:
+
+            # Restaura cursor normal
+            QApplication.restoreOverrideCursor()
+
+    def aplicar_mediana_3x3(self):
+        """
+        Aplica filtro de mediana 3x3.
+        """
+
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        if imagem is None:
+            return
+
+        # Mostra cursor de espera
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        try:
+
+            imagem_filtrada = aplicar_mediana_3x3(imagem)
 
             self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
 
