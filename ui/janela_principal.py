@@ -7,16 +7,18 @@ Responsável por:
 - interação do usuário
 """
 
-from PyQt5.QtWidgets import QMainWindow, QLabel, QFileDialog, QAction, QMessageBox,QInputDialog, QApplication
+from PyQt5.QtWidgets import QMainWindow, QLabel, QFileDialog, QAction, QMessageBox,QInputDialog, QApplication, QActionGroup
 
 from PyQt5.QtCore import Qt
 
 from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
-from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste, transformacao_logaritmica, transformacao_exponencial
+from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste, transformacao_logaritmica, transformacao_exponencial, expansao_contraste
 from processing.reamostragem import redimensionar_vizinho_mais_proximo, redimensionar_bilinear
-from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5, aplicar_gaussiano_3x3, aplicar_gaussiano_5x5, aplicar_sobel, aplicar_laplaciano, aplicar_mediana_3x3
+from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5, aplicar_box_9x9, aplicar_gaussiano_3x3, aplicar_gaussiano_5x5, aplicar_sobel, aplicar_laplaciano, aplicar_mediana_3x3
 from ui.dialog_redimensionar import DialogRedimensionar
+
+
 
 class JanelaPrincipal(QMainWindow):
     """
@@ -43,6 +45,9 @@ class JanelaPrincipal(QMainWindow):
         # Define o QLabel como widget central da janela
         self.setCentralWidget(self.label_imagem)
 
+        # Padding padrão do sistema
+        self.tipo_padding = "edge"
+
         # Cria o menu da interface
         self.criar_menu()
 
@@ -50,9 +55,37 @@ class JanelaPrincipal(QMainWindow):
         """
         Cria os menus superiores da aplicação.
         """
+        # 
 
         # Barra de menu
         barra_menu = self.menuBar()
+
+        menu_configuracoes = barra_menu.addMenu("Configurações")
+
+        menu_padding = menu_configuracoes.addMenu("Padding")
+
+        # Grupo exclusivo
+        grupo_padding = QActionGroup(self)
+        grupo_padding.setExclusive(True)
+
+        # Padding por replicação
+        acao_padding_replicacao = QAction("Replicação", self, checkable=True)
+        acao_padding_replicacao.setChecked(True)
+        acao_padding_replicacao.triggered.connect(lambda: self.definir_tipo_padding("edge"))
+        grupo_padding.addAction(acao_padding_replicacao)
+        menu_padding.addAction(acao_padding_replicacao)
+
+        # padding por reflexão
+        acao_padding_reflexao = QAction("Reflexão", self, checkable=True)
+        acao_padding_reflexao.triggered.connect(lambda: self.definir_tipo_padding("reflect"))
+        grupo_padding.addAction(acao_padding_reflexao)
+        menu_padding.addAction(acao_padding_reflexao)
+
+        # zero padding
+        acao_padding_zero = QAction("Zero Padding", self, checkable=True)
+        acao_padding_zero.triggered.connect(lambda: self.definir_tipo_padding("constant"))
+        grupo_padding.addAction(acao_padding_zero)
+        menu_padding.addAction(acao_padding_zero)
 
         # Menu "Arquivo"
         menu_arquivo = barra_menu.addMenu("Arquivo")
@@ -112,6 +145,13 @@ class JanelaPrincipal(QMainWindow):
         # Adiciona a ação "Ajustar Contraste" ao menu "Transformações"
         menu_transformacoes.addAction(acao_ajustar_contraste)
 
+        # adiciona a ação "Expansão de Contraste" ao menu "Transformações"
+        acao_expansao_contraste = QAction("Expansão de Contraste", self)
+        acao_expansao_contraste.triggered.connect(self.aplicar_expansao_contraste)
+
+        # Adiciona a ação "Expansão de Contraste" ao menu "Transformações"
+        menu_transformacoes.addAction(acao_expansao_contraste)
+
         # adiciona a ação "Transformação Logarítmica" ao menu "Transformações"
         acao_transformacao_logaritmica = QAction("Transformação Logarítmica", self)
         acao_transformacao_logaritmica.triggered.connect(self.aplicar_transformacao_logaritmica)
@@ -157,6 +197,13 @@ class JanelaPrincipal(QMainWindow):
         # Adiciona a ação "Filtro Box 5x5" ao menu "Filtros"
         menu_filtros.addAction(acao_filtro_box_5x5)
 
+        # Ação "Filtro Box 9x9"
+        acao_filtro_box_9x9 = QAction("Filtro Box 9x9", self)
+        acao_filtro_box_9x9.triggered.connect(self.aplicar_box_9x9)
+
+        # Adiciona a ação "Filtro Box 9x9" ao menu "Filtros"
+        menu_filtros.addAction(acao_filtro_box_9x9)
+
         # Ação "Filtro Gaussiano 3x3"
         acao_filtro_gaussiano_3x3 = QAction("Filtro Gaussiano 3x3", self)
         acao_filtro_gaussiano_3x3.triggered.connect(self.aplicar_gaussiano_3x3)
@@ -191,9 +238,6 @@ class JanelaPrincipal(QMainWindow):
 
         # Adiciona a ação "Filtro Mediana 3x3" ao menu "Filtros"
         menu_filtros.addAction(acao_filtro_mediana_3x3)
-
-
-
 
     def abrir_imagem(self):
         """
@@ -390,6 +434,26 @@ class JanelaPrincipal(QMainWindow):
         # Exibe a imagem modificada na interface
         self.exibir_imagem()
 
+    def aplicar_expansao_contraste(self):
+        """
+        Aplica expansão linear de contraste.
+        """
+
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        if imagem is None:
+            return
+
+        imagem_transformada = expansao_contraste(
+            imagem
+        )
+
+        self.gerenciador_imagem.imagem_atual = (
+            imagem_transformada
+        )
+
+        self.exibir_imagem()
+
     def aplicar_transformacao_logaritmica(self):
         """
         Aplica transformação logarítmica.
@@ -548,6 +612,32 @@ class JanelaPrincipal(QMainWindow):
             # Restaura cursor normal
             QApplication.restoreOverrideCursor()
 
+    def aplicar_box_9x9(self):
+        """
+        Aplica filtro Box 9x9.
+        """
+
+        imagem = self.gerenciador_imagem.obter_imagem_atual()
+
+        if imagem is None:
+            return
+
+        # Mostra cursor de espera
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        try:
+
+            imagem_filtrada = aplicar_box_9x9(imagem)
+
+            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
+
+            self.exibir_imagem()
+
+        finally:
+
+            # Restaura cursor normal
+            QApplication.restoreOverrideCursor()
+
     def aplicar_gaussiano_3x3(self):
         """
         Aplica filtro Gaussiano 3x3.
@@ -678,7 +768,21 @@ class JanelaPrincipal(QMainWindow):
             # Restaura cursor normal
             QApplication.restoreOverrideCursor()
 
+    def definir_tipo_padding(self, tipo):
+        """
+        Define o tipo de padding a ser utilizado nos filtros.
 
+        Args:
+            tipo (str): Tipo de padding ("edge", "reflect" ou "constant").
+        """
+        self.tipo_padding = tipo
+        QMessageBox.information(
+            self,
+            "Tipo de Padding",
+            f"Tipo de padding definido para: {tipo}"
+        )
+
+    
 
 
 

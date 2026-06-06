@@ -8,7 +8,7 @@ import numpy as np
 import time
 from numpy.lib.stride_tricks import sliding_window_view
 
-def aplicar_convolucao(imagem, kernel, clip=True):
+def aplicar_convolucao(imagem, kernel, clip=True, padding = 'edge'):
     """
     Aplica convolução espacial utilizando
     o kernel informado.
@@ -18,8 +18,6 @@ def aplicar_convolucao(imagem, kernel, clip=True):
     - broadcasting
     - NumPy
     """
-    # Obtém as dimensões da imagem 
-    altura, largura = imagem.shape[:2] 
 
     # Obtém as dimensões do kernel
     altura_kernel, largura_kernel = kernel.shape
@@ -36,7 +34,7 @@ def aplicar_convolucao(imagem, kernel, clip=True):
 
     # aplica padding nas bordas
     if imagem_colorida:
-        imagem_padded = np.pad(imagem_float, ((margem_y, margem_y), (margem_x, margem_x), (0, 0)), mode='edge')
+        imagem_padded = np.pad(imagem_float, ((margem_y, margem_y), (margem_x, margem_x), (0, 0)), mode=padding)
 
         # cria janelas 
         janelas = sliding_window_view(imagem_padded, (altura_kernel, largura_kernel), axis = (0,1))
@@ -47,7 +45,7 @@ def aplicar_convolucao(imagem, kernel, clip=True):
         resultado = np.sum(janelas * kernel[None, None, None, :, :], axis=(3, 4))
     
     else: # imagem em escala de cinza
-        imagem_padded = np.pad(imagem_float, ((margem_y, margem_y), (margem_x, margem_x)), mode='edge')
+        imagem_padded = np.pad(imagem_float, ((margem_y, margem_y), (margem_x, margem_x)), mode=padding)
         
         # cria janelas
         janelas = sliding_window_view(imagem_padded, (altura_kernel, largura_kernel), axis = (0,1))
@@ -70,14 +68,14 @@ def kernel_box_3x3():
 
     return np.ones((3, 3),dtype=np.float32) / 9.0
 
-def aplicar_box_3x3(imagem):
+def aplicar_box_3x3(imagem, padding = 'edge'):
     """
     Aplica filtro Box 3x3.
     """
     inicio = time.time()
 
     kernel = kernel_box_3x3()
-    resultado = aplicar_convolucao(imagem, kernel)
+    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
 
 
     fim = time.time()
@@ -93,7 +91,7 @@ def kernel_box_5x5():
 
     return np.ones((5, 5), dtype=np.float32) / 25.0
 
-def aplicar_box_5x5(imagem):
+def aplicar_box_5x5(imagem, padding = 'edge'):
 
     """
     Aplica filtro Box 5x5.
@@ -103,12 +101,40 @@ def aplicar_box_5x5(imagem):
 
     kernel = kernel_box_5x5()
 
-    resultado = aplicar_convolucao(imagem, kernel)
+    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
 
     fim = time.perf_counter()
 
     print(
         f"Tempo Box 5x5: "
+        f"{fim - inicio:.3f} segundos"
+    )
+
+    return resultado
+
+def kernel_box_9x9():
+    """
+    Retorna kernel Box 9x9.
+    """
+
+    return np.ones((9, 9), dtype=np.float32) / 81.0
+
+def aplicar_box_9x9(imagem, padding = 'edge'):
+
+    """
+    Aplica filtro Box 9x9.
+    """
+
+    inicio = time.perf_counter()
+
+    kernel = kernel_box_9x9()
+
+    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
+
+    fim = time.perf_counter()
+
+    print(
+        f"Tempo Box 9x9: "
         f"{fim - inicio:.3f} segundos"
     )
 
@@ -124,7 +150,7 @@ def kernel_gaussiano_3x3():
         [2, 4, 2],
         [1, 2, 1]], dtype=np.float32) / 16.0
 
-def aplicar_gaussiano_3x3(imagem):
+def aplicar_gaussiano_3x3(imagem, padding = 'edge'):
     """
     Aplica filtro Gaussiano 3x3.
     """
@@ -133,7 +159,7 @@ def aplicar_gaussiano_3x3(imagem):
 
     kernel = kernel_gaussiano_3x3()
 
-    resultado = aplicar_convolucao(imagem, kernel)
+    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
 
     fim = time.perf_counter()
 
@@ -159,14 +185,14 @@ def kernel_gaussiano_5x5():
         dtype=np.float32
     ) / 256.0
 
-def aplicar_gaussiano_5x5(imagem):
+def aplicar_gaussiano_5x5(imagem, padding = 'edge'):
     """
     Aplica filtro Gaussiano 5x5.
     """
     inicio = time.perf_counter()
 
     kernel = kernel_gaussiano_5x5()
-    resultado = aplicar_convolucao(imagem, kernel)
+    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
 
     fim = time.perf_counter()
 
@@ -203,7 +229,7 @@ def kernel_sobel_y():
         dtype=np.float32
     )
 
-def aplicar_sobel(imagem):
+def aplicar_sobel(imagem, padding = 'edge'):
     """
     Aplica filtro Sobel.
     """
@@ -212,8 +238,8 @@ def aplicar_sobel(imagem):
     kernel_x = kernel_sobel_x()
     kernel_y = kernel_sobel_y()
 
-    gradiente_x = aplicar_convolucao(imagem, kernel_x, clip=False)
-    gradiente_y = aplicar_convolucao(imagem, kernel_y, clip=False)
+    gradiente_x = aplicar_convolucao(imagem, kernel_x, clip=False, padding=padding)
+    gradiente_y = aplicar_convolucao(imagem, kernel_y, clip=False, padding=padding)
 
     # Calcula a magnitude do gradiente
     resultado = np.sqrt(gradiente_x**2 + gradiente_y**2)
@@ -247,14 +273,14 @@ def kernel_laplaciano():
         dtype=np.float32
     )
 
-def aplicar_laplaciano(imagem):
+def aplicar_laplaciano(imagem, padding = 'edge'):
     """
     Aplica filtro Laplaciano.
     """
     inicio = time.perf_counter()
 
     kernel = kernel_laplaciano()
-    resultado = aplicar_convolucao(imagem, kernel, clip=False)
+    resultado = aplicar_convolucao(imagem, kernel, clip=False, padding=padding)
 
     # O resultado do Laplaciano pode conter valores negativos, então pegamos o valor absoluto
     resultado = np.abs(resultado)
@@ -270,7 +296,7 @@ def aplicar_laplaciano(imagem):
 
     return resultado
 
-def aplicar_mediana_3x3(imagem):
+def aplicar_mediana_3x3(imagem, padding = 'edge'):
     """
     Aplica filtro mediana 3x3.
 
@@ -287,7 +313,7 @@ def aplicar_mediana_3x3(imagem):
     if len(imagem.shape) == 3:
 
         # Imagem colorida
-        imagem_padded = np.pad(imagem, ((margem, margem), (margem, margem), (0, 0)), mode='edge')
+        imagem_padded = np.pad(imagem, ((margem, margem), (margem, margem), (0, 0)), mode=padding)
         
         # (H, W, C, 3, 3)
         janelas = sliding_window_view(imagem_padded, (tamanho_kernel, tamanho_kernel), axis=(0, 1))
@@ -295,7 +321,7 @@ def aplicar_mediana_3x3(imagem):
         resultado = np.median(janelas, axis=(3, 4))
     else:
         # Imagem em escala de cinza
-        imagem_padded = np.pad(imagem, ((margem, margem), (margem, margem)), mode='edge')
+        imagem_padded = np.pad(imagem, ((margem, margem), (margem, margem)), mode=padding)
         
         # (H, W, 3, 3)
         janelas = sliding_window_view(imagem_padded, (tamanho_kernel, tamanho_kernel), axis=(0, 1))

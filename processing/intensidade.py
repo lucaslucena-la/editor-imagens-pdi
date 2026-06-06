@@ -75,6 +75,45 @@ def ajustar_contraste(imagem, fator):
     # Converte de volta para uint8
     return imagem_contraste.astype(np.uint8)
 
+def expansao_contraste(imagem):
+    """
+    Aplica expansão linear de contraste.
+
+    Mapeia:
+        rmin -> 0
+        rmax -> 255
+
+    Expandindo toda a faixa dinâmica
+    da imagem.
+    """
+
+    # Converte para float32
+    imagem_float = imagem.astype(np.float32)
+
+    # Obtém intensidade mínima e máxima
+    rmin = np.min(imagem_float)
+    rmax = np.max(imagem_float)
+
+    # Evita divisão por zero
+    if rmax == rmin:
+        return imagem.copy()
+
+    # Expansão linear
+    imagem_expandida = (
+        (imagem_float - rmin)
+        * 255.0
+        / (rmax - rmin)
+    )
+
+    # Limita valores
+    imagem_expandida = np.clip(
+        imagem_expandida,
+        0,
+        255
+    )
+
+    return imagem_expandida.astype(np.uint8)
+
 def transformacao_logaritmica(imagem):
     """
     Aplica transformação logarítmica.
@@ -122,3 +161,4 @@ def transformacao_exponencial(imagem):
     imagem_exp = np.clip(imagem_exp,0,255)
 
     return imagem_exp.astype(np.uint8)
+
