@@ -43,7 +43,7 @@ class GerenciadorImagens:
             raise ValueError("Não foi possível carregar a imagem."
         )
         
-        # Salva a cópia da imasgem original
+        # Salva a cópia da imagem original
         self.imagem_original = imagem.copy()
 
         # Define a imagem atual como a original

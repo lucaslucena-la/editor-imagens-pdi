@@ -15,15 +15,21 @@ from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
 from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste, transformacao_logaritmica, transformacao_exponencial, expansao_contraste
 from processing.reamostragem import redimensionar_vizinho_mais_proximo, redimensionar_bilinear
-from processing.convolucao import aplicar_box_3x3, aplicar_box_5x5, aplicar_box_9x9, aplicar_gaussiano_3x3, aplicar_gaussiano_5x5, aplicar_sobel, aplicar_laplaciano, aplicar_mediana_3x3
+from processing.convolucao import  aplicar_box, aplicar_sobel, aplicar_laplaciano, aplicar_mediana, aplicar_gaussiano
 from ui.dialog_redimensionar import DialogRedimensionar
-
+from ui.dialog_gaussiano import (DialogGaussiano)
+from ui.dialog_box import (DialogBox)
+from ui.dialog_mediana import (DialogMediana)
 
 
 class JanelaPrincipal(QMainWindow):
     """
       Classe que representa a janela principal da aplicação.
     """
+    
+# ============================================================================ #
+# CONFIGURAÇÕES DA INTERFACE
+# ============================================================================ #
 
     def __init__(self):
         super().__init__()
@@ -183,41 +189,6 @@ class JanelaPrincipal(QMainWindow):
         # Menu "Filtros"
         menu_filtros = barra_menu.addMenu("Filtros")
 
-        # Ação "Filtro Box 3x3"
-        acao_filtro_box = QAction("Filtro Box 3x3", self)
-        acao_filtro_box.triggered.connect(self.aplicar_box_3x3)
-
-        # Adiciona a ação "Filtro Box 3x3" ao menu "Filtros"
-        menu_filtros.addAction(acao_filtro_box)
-
-        # Ação "Filtro Box 5x5"
-        acao_filtro_box_5x5 = QAction("Filtro Box 5x5", self)
-        acao_filtro_box_5x5.triggered.connect(self.aplicar_box_5x5)
-
-        # Adiciona a ação "Filtro Box 5x5" ao menu "Filtros"
-        menu_filtros.addAction(acao_filtro_box_5x5)
-
-        # Ação "Filtro Box 9x9"
-        acao_filtro_box_9x9 = QAction("Filtro Box 9x9", self)
-        acao_filtro_box_9x9.triggered.connect(self.aplicar_box_9x9)
-
-        # Adiciona a ação "Filtro Box 9x9" ao menu "Filtros"
-        menu_filtros.addAction(acao_filtro_box_9x9)
-
-        # Ação "Filtro Gaussiano 3x3"
-        acao_filtro_gaussiano_3x3 = QAction("Filtro Gaussiano 3x3", self)
-        acao_filtro_gaussiano_3x3.triggered.connect(self.aplicar_gaussiano_3x3)
-
-        # Adiciona a ação "Filtro Gaussiano 3x3" ao menu "Filtros"
-        menu_filtros.addAction(acao_filtro_gaussiano_3x3)
-
-        # Ação "Filtro Gaussiano 5x5"
-        acao_filtro_gaussiano_5x5 = QAction("Filtro Gaussiano 5x5", self)
-        acao_filtro_gaussiano_5x5.triggered.connect(self.aplicar_gaussiano_5x5)
-
-        # Adiciona a ação "Filtro Gaussiano 5x5" ao menu "Filtros"
-        menu_filtros.addAction(acao_filtro_gaussiano_5x5)
-
         # Ação "Filtro Sobel"
         acao_filtro_sobel = QAction("Filtro Sobel", self)
         acao_filtro_sobel.triggered.connect(self.aplicar_sobel)
@@ -232,12 +203,47 @@ class JanelaPrincipal(QMainWindow):
         # Adiciona a ação "Filtro Laplaciano" ao menu "Filtros"
         menu_filtros.addAction(acao_filtro_laplaciano)
 
-        # Ação "Filtro Mediana 3x3"
-        acao_filtro_mediana_3x3 = QAction("Filtro Mediana 3x3", self)
-        acao_filtro_mediana_3x3.triggered.connect(self.aplicar_mediana_3x3)
 
-        # Adiciona a ação "Filtro Mediana 3x3" ao menu "Filtros"
-        menu_filtros.addAction(acao_filtro_mediana_3x3)
+        #-------------------------------------------
+
+        # Ação "Filtro Gaussiano"
+        acao_gaussiano = QAction("Gaussiano",self)
+        acao_gaussiano.triggered.connect(self.aplicar_gaussiano)
+
+        # Adiciona a ação "Filtro Gaussiano " ao menu "Filtros"
+        menu_filtros.addAction(acao_gaussiano)
+
+        # Ação "Filtro Box "
+        acao_box = QAction("Box ", self)
+        acao_box.triggered.connect(self.aplicar_box)
+
+        # Adiciona a ação "Filtro Box " ao menu "Filtros"
+        menu_filtros.addAction(acao_box)
+
+        # Ação "Filtro Mediana"
+        acao_filtro_mediana = QAction("Filtro Mediana", self)
+        acao_filtro_mediana.triggered.connect(self.aplicar_mediana)
+
+        # Adiciona a ação "Filtro Mediana" ao menu "Filtros"
+        menu_filtros.addAction(acao_filtro_mediana)
+
+    def definir_tipo_padding(self, tipo):
+        """
+        Define o tipo de padding a ser utilizado nos filtros.
+
+        Args:
+            tipo (str): Tipo de padding ("edge", "reflect" ou "constant").
+        """
+        self.tipo_padding = tipo
+        QMessageBox.information(
+            self,
+            "Tipo de Padding",
+            f"Tipo de padding definido para: {tipo}"
+        )
+
+# ============================================================================ #
+# OPERAÇÕES DE ARQUIVO
+# ============================================================================ #
 
     def abrir_imagem(self):
         """
@@ -310,6 +316,10 @@ class JanelaPrincipal(QMainWindow):
 
         # Exibe a imagem restaurada na interface
         self.exibir_imagem()
+
+# ============================================================================ #
+# TRANSFORMAÇÕES DE INTENSIDADE
+# ============================================================================ #
 
     def aplicar_negativo(self):
         """
@@ -494,6 +504,10 @@ class JanelaPrincipal(QMainWindow):
 
         self.exibir_imagem()
 
+# ============================================================================ #
+# REAMOSTRAGEM DE IMAGENS
+# ============================================================================ #
+
     def redimensionar_vizinho(self):
         """
         Redimensiona a imagem atual usando o método do vizinho mais próximo.
@@ -560,135 +574,9 @@ class JanelaPrincipal(QMainWindow):
             # Atualiza interface
             self.exibir_imagem()
 
-    def aplicar_box_3x3(self):
-        """
-        Aplica filtro Box 3x3.
-        """
-
-        imagem = self.gerenciador_imagem.obter_imagem_atual()
-
-        if imagem is None:
-            return
-
-        # Mostra cursor de espera
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        try:
-
-            imagem_filtrada = aplicar_box_3x3(imagem)
-
-            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
-
-            self.exibir_imagem()
-
-        finally:
-
-            # Restaura cursor normal
-            QApplication.restoreOverrideCursor()
-
-    def aplicar_box_5x5(self):
-        """
-        Aplica filtro Box 5x5.
-        """
-
-        imagem = self.gerenciador_imagem.obter_imagem_atual()
-
-        if imagem is None:
-            return
-
-        # Mostra cursor de espera
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        try:
-
-            imagem_filtrada = aplicar_box_5x5(imagem)
-
-            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
-
-            self.exibir_imagem()
-
-        finally:
-
-            # Restaura cursor normal
-            QApplication.restoreOverrideCursor()
-
-    def aplicar_box_9x9(self):
-        """
-        Aplica filtro Box 9x9.
-        """
-
-        imagem = self.gerenciador_imagem.obter_imagem_atual()
-
-        if imagem is None:
-            return
-
-        # Mostra cursor de espera
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        try:
-
-            imagem_filtrada = aplicar_box_9x9(imagem)
-
-            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
-
-            self.exibir_imagem()
-
-        finally:
-
-            # Restaura cursor normal
-            QApplication.restoreOverrideCursor()
-
-    def aplicar_gaussiano_3x3(self):
-        """
-        Aplica filtro Gaussiano 3x3.
-        """
-
-        imagem = self.gerenciador_imagem.obter_imagem_atual()
-
-        if imagem is None:
-            return
-
-        # Mostra cursor de espera
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        try:
-
-            imagem_filtrada = aplicar_gaussiano_3x3(imagem)
-
-            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
-
-            self.exibir_imagem()
-
-        finally:
-
-            # Restaura cursor normal
-            QApplication.restoreOverrideCursor()
-    
-    def aplicar_gaussiano_5x5(self):
-        """
-        Aplica filtro Gaussiano 5x5.
-        """
-
-        imagem = self.gerenciador_imagem.obter_imagem_atual()
-
-        if imagem is None:
-            return
-
-        # Mostra cursor de espera
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        try:
-
-            imagem_filtrada = aplicar_gaussiano_5x5(imagem)
-
-            self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
-
-            self.exibir_imagem()
-
-        finally:
-
-            # Restaura cursor normal
-            QApplication.restoreOverrideCursor()
+# ============================================================================ #
+# FILTROS DE DETECÇÃO DE BORDAS
+# ============================================================================ #
 
     def aplicar_sobel(self):
         """
@@ -742,9 +630,93 @@ class JanelaPrincipal(QMainWindow):
             # Restaura cursor normal
             QApplication.restoreOverrideCursor()
 
-    def aplicar_mediana_3x3(self):
+# ============================================================================ #
+# FILTROS DE SUAVIZAÇÃO
+# ============================================================================ #    
+
+    def aplicar_box(self):
         """
-        Aplica filtro de mediana 3x3.
+        Aplica filtro Box parametrizado pelo usuário.
+        """
+
+        imagem = (
+            self.gerenciador_imagem
+            .obter_imagem_atual()
+        )
+
+        if imagem is None:
+            return
+
+        dialog = DialogBox()
+
+        if dialog.exec_():
+
+            tamanho = dialog.obter_parametros()
+
+            # Mostra cursor de espera durante o processamento
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            try:
+
+                imagem_filtrada = (
+                    aplicar_box(
+                        imagem,
+                        tamanho_kernel=tamanho,
+                        padding=self.tipo_padding
+                    )
+                )
+
+                self.gerenciador_imagem.imagem_atual = (
+                    imagem_filtrada
+                )
+
+                self.exibir_imagem()
+
+            finally:
+
+                # Restaura cursor normal após o filtro
+                QApplication.restoreOverrideCursor()
+
+    def aplicar_gaussiano(self):
+        """
+        Aplica filtro gaussiano
+        parametrizado.
+        """
+
+        imagem = (
+            self.gerenciador_imagem
+            .obter_imagem_atual()
+        )
+
+        if imagem is None:
+            return
+
+        dialog = DialogGaussiano()
+
+        if dialog.exec_():
+
+            tamanho, sigma = (
+                dialog.obter_parametros()
+            )
+
+            imagem_filtrada = (
+                aplicar_gaussiano(
+                    imagem,
+                    tamanho,
+                    sigma,
+                    padding=self.tipo_padding
+                )
+            )
+
+            self.gerenciador_imagem.imagem_atual = (
+                imagem_filtrada
+            )
+
+            self.exibir_imagem()
+
+    def aplicar_mediana(self):
+        """
+        Aplica filtro de mediana com tamanho de kernel definido pelo usuário.
         """
 
         imagem = self.gerenciador_imagem.obter_imagem_atual()
@@ -752,12 +724,38 @@ class JanelaPrincipal(QMainWindow):
         if imagem is None:
             return
 
+        tamanho_kernel, ok = QInputDialog.getInt(
+            self,
+            "Filtro Mediana",
+            "Tamanho do kernel (ímpar):",
+            7,
+            3,
+            21,
+            2
+        )
+
+        if not ok:
+            return
+
+        # Garante um kernel ímpar para o cálculo da mediana
+        if tamanho_kernel % 2 == 0: # se for par, mostra mensagem de erro e retorna
+            QMessageBox.warning(
+                self,
+                "Kernel inválido",
+                "O tamanho do kernel da mediana deve ser ímpar."
+            )
+            return
+
         # Mostra cursor de espera
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         try:
 
-            imagem_filtrada = aplicar_mediana_3x3(imagem)
+            imagem_filtrada = aplicar_mediana(
+                imagem,
+                tamanho_kernel=tamanho_kernel,
+                padding=self.tipo_padding
+            )
 
             self.gerenciador_imagem.imagem_atual = (imagem_filtrada)
 
@@ -767,26 +765,5 @@ class JanelaPrincipal(QMainWindow):
 
             # Restaura cursor normal
             QApplication.restoreOverrideCursor()
-
-    def definir_tipo_padding(self, tipo):
-        """
-        Define o tipo de padding a ser utilizado nos filtros.
-
-        Args:
-            tipo (str): Tipo de padding ("edge", "reflect" ou "constant").
-        """
-        self.tipo_padding = tipo
-        QMessageBox.information(
-            self,
-            "Tipo de Padding",
-            f"Tipo de padding definido para: {tipo}"
-        )
-
-    
-
-
-
-
-
 
 

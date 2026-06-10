@@ -1,13 +1,26 @@
 """
-Algoritmos de convolução espacial.
+Algoritmos de convolução espacial e filtros.
 
-Responsável por aplicar kernels em imagens.
+Este módulo implementa filtros baseados em kernels
+utilizando convolução vetorizada com NumPy.
+
+Responsável por:
+- convolução genérica
+- filtros de suavização
+- filtros de detecção de bordas
+
+Técnicas utilizadas:
+- Convolução espacial
+- Broadcasting
+- Sliding Window View
+- Padding configurável
 """
 
 import numpy as np
 import time
 from numpy.lib.stride_tricks import sliding_window_view
 
+# Função genéria de convolução
 def aplicar_convolucao(imagem, kernel, clip=True, padding = 'edge'):
     """
     Aplica convolução espacial utilizando
@@ -42,6 +55,7 @@ def aplicar_convolucao(imagem, kernel, clip=True, padding = 'edge'):
         # Broadcasting:
         # (H,W,C,kH,kW)
         # (1,1,1,kH,kW)
+        # posição y, posição x, canal, linha do kernel, coluna do kernel
         resultado = np.sum(janelas * kernel[None, None, None, :, :], axis=(3, 4))
     
     else: # imagem em escala de cinza
@@ -57,152 +71,13 @@ def aplicar_convolucao(imagem, kernel, clip=True, padding = 'edge'):
 
     #limita os valores entre 0 e 255
     if clip:
-        resultado = np.clip(resultado, 0, 255)
-        return resultado.astype(np.uint8)
+        resultado = np.clip(resultado, 0, 255) # Garante que os valores estejam no intervalo válido para imagens
+        return resultado.astype(np.uint8) # Converte de volta para uint8
     return resultado
 
-def kernel_box_3x3():
-    """
-    Retorna kernel Box 3x3.
-    """
-
-    return np.ones((3, 3),dtype=np.float32) / 9.0
-
-def aplicar_box_3x3(imagem, padding = 'edge'):
-    """
-    Aplica filtro Box 3x3.
-    """
-    inicio = time.time()
-
-    kernel = kernel_box_3x3()
-    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
-
-
-    fim = time.time()
-
-    print(f"Tempo Box 3x3: "f"{fim - inicio:.2f} segundos")
-
-    return resultado
-
-def kernel_box_5x5():
-    """
-    Retorna kernel Box 5x5.
-    """
-
-    return np.ones((5, 5), dtype=np.float32) / 25.0
-
-def aplicar_box_5x5(imagem, padding = 'edge'):
-
-    """
-    Aplica filtro Box 5x5.
-    """
-
-    inicio = time.perf_counter()
-
-    kernel = kernel_box_5x5()
-
-    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
-
-    fim = time.perf_counter()
-
-    print(
-        f"Tempo Box 5x5: "
-        f"{fim - inicio:.3f} segundos"
-    )
-
-    return resultado
-
-def kernel_box_9x9():
-    """
-    Retorna kernel Box 9x9.
-    """
-
-    return np.ones((9, 9), dtype=np.float32) / 81.0
-
-def aplicar_box_9x9(imagem, padding = 'edge'):
-
-    """
-    Aplica filtro Box 9x9.
-    """
-
-    inicio = time.perf_counter()
-
-    kernel = kernel_box_9x9()
-
-    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
-
-    fim = time.perf_counter()
-
-    print(
-        f"Tempo Box 9x9: "
-        f"{fim - inicio:.3f} segundos"
-    )
-
-    return resultado
-
-def kernel_gaussiano_3x3():
-    """
-    Retorna kernel Gaussiano 3x3.
-    """
-
-    return np.array([
-        [1, 2, 1],
-        [2, 4, 2],
-        [1, 2, 1]], dtype=np.float32) / 16.0
-
-def aplicar_gaussiano_3x3(imagem, padding = 'edge'):
-    """
-    Aplica filtro Gaussiano 3x3.
-    """
-
-    inicio = time.perf_counter()
-
-    kernel = kernel_gaussiano_3x3()
-
-    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
-
-    fim = time.perf_counter()
-
-    print(
-        f"Tempo Gaussiano 3x3: "
-        f"{fim - inicio:.3f} segundos"
-    )
-
-    return resultado
-
-def kernel_gaussiano_5x5():
-    """
-    Retorna kernel Gaussiano 5x5.
-    """
-    return np.array(
-        [
-            [1,  4,  6,  4, 1],
-            [4, 16, 24, 16, 4],
-            [6, 24, 36, 24, 6],
-            [4, 16, 24, 16, 4],
-            [1,  4,  6,  4, 1],
-        ],
-        dtype=np.float32
-    ) / 256.0
-
-def aplicar_gaussiano_5x5(imagem, padding = 'edge'):
-    """
-    Aplica filtro Gaussiano 5x5.
-    """
-    inicio = time.perf_counter()
-
-    kernel = kernel_gaussiano_5x5()
-    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
-
-    fim = time.perf_counter()
-
-    print(
-        f"Tempo Gaussiano 5x5: "
-        f"{fim - inicio:.3f} segundos"
-    )
-
-    return resultado
-
+# ============================================================================ #
+# FILTROS DE DETECÇÃO DE BORDAS - SOBEL
+# ============================================================================ #
 def kernel_sobel_x():
     """
     Retorna kernel Sobel X.
@@ -234,10 +109,12 @@ def aplicar_sobel(imagem, padding = 'edge'):
     Aplica filtro Sobel.
     """
     inicio = time.perf_counter()
-
+    
+    # Aplica os kernels de Sobel para obter os gradientes nas direções X e Y
     kernel_x = kernel_sobel_x()
     kernel_y = kernel_sobel_y()
 
+    # Aplica convolução para obter os gradientes em X e Y
     gradiente_x = aplicar_convolucao(imagem, kernel_x, clip=False, padding=padding)
     gradiente_y = aplicar_convolucao(imagem, kernel_y, clip=False, padding=padding)
 
@@ -255,6 +132,10 @@ def aplicar_sobel(imagem, padding = 'edge'):
     resultado = np.clip(resultado, 0, 255).astype(np.uint8)
 
     return resultado
+
+# ============================================================================ #
+# FILTROS DE DETECÇÃO DE BORDAS - LAPLACIANO
+# ============================================================================ #
 
 def kernel_laplaciano():
     """
@@ -283,7 +164,7 @@ def aplicar_laplaciano(imagem, padding = 'edge'):
     resultado = aplicar_convolucao(imagem, kernel, clip=False, padding=padding)
 
     # O resultado do Laplaciano pode conter valores negativos, então pegamos o valor absoluto
-    resultado = np.abs(resultado)
+    resultado = np.abs(resultado) 
    
     fim = time.perf_counter()
 
@@ -296,42 +177,175 @@ def aplicar_laplaciano(imagem, padding = 'edge'):
 
     return resultado
 
-def aplicar_mediana_3x3(imagem, padding = 'edge'):
+# ============================================================================ #
+# FILTROS DE SUAVIZAÇÃO - BOX FILTER
+# ============================================================================ #
+
+def gerar_kernel_box(tamanho_kernel):
     """
-    Aplica filtro mediana 3x3.
+    Gera um kernel Box NxN normalizado.
+
+    Args:
+        tamanho_kernel (int): Tamanho ímpar do kernel.
+
+    Returns:
+        numpy.ndarray: Kernel Box normalizado.
+    """
+
+    # O kernel Box deve ter tamanho ímpar para possuir centro definido
+    if tamanho_kernel % 2 == 0:
+        raise ValueError("O tamanho do kernel Box deve ser ímpar.")
+
+    # Cria uma matriz de 1s e normaliza pela quantidade total de elementos
+    return (
+        np.ones((tamanho_kernel, tamanho_kernel), dtype=np.float32)
+        / (tamanho_kernel * tamanho_kernel)
+    )
+
+def aplicar_box(imagem, tamanho_kernel=3, padding='edge'):
+    """
+    Aplica filtro Box com tamanho de kernel parametrizado.
+
+    Args:
+        imagem (numpy.ndarray): Imagem de entrada.
+        tamanho_kernel (int): Tamanho ímpar do kernel Box.
+        padding (str): Tipo de padding aplicado nas bordas.
+
+    Returns:
+        numpy.ndarray: Imagem filtrada.
+    """
+
+    inicio = time.perf_counter()
+
+    # Gera o kernel Box normalizado de acordo com o tamanho informado
+    kernel = gerar_kernel_box(tamanho_kernel)
+
+    # Aplica a convolução utilizando o kernel construído dinamicamente
+    resultado = aplicar_convolucao(imagem, kernel, padding=padding)
+
+    fim = time.perf_counter()
+
+    print(
+        f"Tempo Box {tamanho_kernel}x{tamanho_kernel}: "
+        f"{fim - inicio:.3f} segundos"
+    )
+
+    return resultado
+
+# ============================================================================ #
+# FILTROS DE SUAVIZAÇÃO - GAUSSIANO
+# ============================================================================ #
+def gerar_kernel_gaussiano(tamanho, sigma):
+    """
+    Gera um kernel gaussiano NxN.
+
+    Args:
+        tamanho (int): tamanho do kernel.
+        sigma (float): desvio padrão da gaussiana.
+
+    Returns:
+        numpy.ndarray
+    """
+
+    # Kernel deve ser ímpar
+    if tamanho % 2 == 0:raise ValueError("O tamanho do kernel deve ser ímpar.")
+
+    # Coordenadas centradas em zero
+    eixo = np.arange(-(tamanho // 2),(tamanho // 2) + 1)
+
+    x, y = np.meshgrid(eixo, eixo)
+
+    # Fórmula da Gaussiana 2D
+    kernel = np.exp(-(x**2 + y**2)/(2 * sigma**2))
+
+    # Normalização
+    kernel = kernel / np.sum(kernel)
+
+    return kernel.astype(np.float32)
+
+def aplicar_gaussiano(imagem,tamanho,sigma,padding="edge"):
+    """
+    Aplica filtro gaussiano
+    parametrizado.
+    """
+
+    inicio = time.perf_counter()
+
+    kernel = gerar_kernel_gaussiano(tamanho,sigma)
+
+    resultado = aplicar_convolucao(imagem,kernel,padding=padding)
+
+    fim = time.perf_counter()
+
+    print(
+        f"Tempo Gaussiano Personalizado: "
+        f"{fim - inicio:.3f} segundos"
+    )
+
+    return resultado
+
+# ============================================================================ #
+# FILTROS NÃO LINEARES
+# ============================================================================ #
+def aplicar_mediana(imagem, tamanho_kernel=3, padding='edge'):
+    """
+    Aplica filtro de mediana com tamanho de kernel parametrizado.
 
     Utiliza:
     - sliding_window_view
-    - broadcasting
+    - vetorização com NumPy
     - indexação avançada NumPy
+
+    Args:
+        imagem (numpy.ndarray): Imagem de entrada.
+        tamanho_kernel (int): Tamanho ímpar do kernel de mediana.
+        padding (str): Tipo de padding aplicado nas bordas.
+
+    Returns:
+        numpy.ndarray: Imagem filtrada.
     """
-    
-    tamanho_kernel = 3
+
+    inicio = time.perf_counter()
+
+    # O filtro da mediana exige janela ímpar para ter pixel central
+    if tamanho_kernel % 2 == 0:
+        raise ValueError("O tamanho do kernel da mediana deve ser ímpar.")
+
+    # Calcula a margem necessária com base no tamanho do kernel
     margem = tamanho_kernel // 2
 
     # Verifica se a imagem é colorida
     if len(imagem.shape) == 3:
 
-        # Imagem colorida
+        # Imagem colorida: aplica padding apenas nos eixos espaciais,
+        # preservando os canais da imagem
         imagem_padded = np.pad(imagem, ((margem, margem), (margem, margem), (0, 0)), mode=padding)
-        
-        # (H, W, C, 3, 3)
+
+        # Cria janelas deslizantes de tamanho NxN para cada pixel.
+        # Saída esperada: (H, W, C, k, k)
         janelas = sliding_window_view(imagem_padded, (tamanho_kernel, tamanho_kernel), axis=(0, 1))
-       
+
+        # Calcula a mediana dentro de cada janela para cada canal
         resultado = np.median(janelas, axis=(3, 4))
     else:
-        # Imagem em escala de cinza
+        # Imagem em escala de cinza: padding apenas nos dois eixos
         imagem_padded = np.pad(imagem, ((margem, margem), (margem, margem)), mode=padding)
-        
-        # (H, W, 3, 3)
+
+        # Cria janelas deslizantes de tamanho NxN.
+        # Saída esperada: (H, W, k, k)
         janelas = sliding_window_view(imagem_padded, (tamanho_kernel, tamanho_kernel), axis=(0, 1))
-        
+
+        # Calcula a mediana dentro de cada janela
         resultado = np.median(janelas, axis=(2, 3))
 
+    # Garante o intervalo válido de imagem e converte para uint8
     resultado = np.clip(resultado, 0, 255).astype(np.uint8)
+
+    fim = time.perf_counter()
+
+    print(
+        f"Tempo Mediana {tamanho_kernel}x{tamanho_kernel}: "
+        f"{fim - inicio:.3f} segundos"
+    )
+
     return resultado
-    
-
-
-
-

@@ -35,11 +35,13 @@ def redimensionar_vizinho_mais_proximo(imagem, nova_largura, nova_altura):
     # obtém as dimensões da imagem original
     altura_original, largura_original = imagem.shape[:2]
 
-    # calcula fatores de escala (mesma lógica da versão com loops)
+    # calcula fatores de escala (mesma lógica da versão com loops) 
+    # imag_original / nova_imagem
     escala_x = largura_original / nova_largura
     escala_y = altura_original / nova_altura
 
     # cria os índices do grid de destino
+    # arange: gera um array de 0 até nova_largura-1 (mesma lógica da versão com loops)
     x = np.arange(nova_largura)
     y = np.arange(nova_altura)
 
@@ -99,6 +101,7 @@ def redimensionar_bilinear(imagem, nova_largura, nova_altura):
     dx = escala_x - x1
     dy = escala_y - y1
 
+    # Para imagens coloridas, precisamos manter a dimensão dos canais
     if len(imagem.shape) == 3:
 
         dx = dx[..., None]  # (H,W,1)
