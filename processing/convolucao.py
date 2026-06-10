@@ -349,3 +349,108 @@ def aplicar_mediana(imagem, tamanho_kernel=3, padding='edge'):
     )
 
     return resultado
+
+# ============================================================================ #
+# FILTROS DE AGUÇAMENTO
+# ============================================================================ #
+
+def aplicar_agucamento_laplaciano(imagem,tamanho_kernel=5,sigma=1.0,padding="edge"):
+    """
+    Aplica aguçamento utilizando o método Laplaciano .
+
+    Procedimento:
+
+    1. Suaviza a imagem utilizando filtro gaussiano.
+    2. Calcula a Laplaciana da imagem suavizada.
+    3. Soma a Laplaciana à imagem original.
+
+    Fórmula:
+
+        g(x,y) = f(x,y) + c * Laplaciano
+
+    Como o kernel utilizado possui centro negativo,
+    utiliza-se c = -1.
+
+    Args:
+        imagem (numpy.ndarray):
+            Imagem de entrada.
+
+        tamanho_kernel (int):
+            Tamanho do kernel gaussiano.
+
+        sigma (float):
+            Desvio padrão da gaussiana.
+
+        padding (str):
+            Tipo de padding.
+
+    Returns:
+        numpy.ndarray:
+            Imagem aguçada.
+    """
+
+    inicio = time.perf_counter()
+
+    # -----------------------------------------------------------------
+    # ETAPA 1
+    # SUAVIZAÇÃO GAUSSIANA
+    # -----------------------------------------------------------------
+
+    imagem_suavizada = aplicar_gaussiano(
+        imagem,
+        tamanho=tamanho_kernel,
+        sigma=sigma,
+        padding=padding
+    )
+
+    # -----------------------------------------------------------------
+    # ETAPA 2
+    # CÁLCULO DA LAPLACIANA
+    # -----------------------------------------------------------------
+
+    kernel = kernel_laplaciano()
+
+    laplaciano = aplicar_convolucao(
+        imagem_suavizada,
+        kernel,
+        clip=False,
+        padding=padding
+    )
+
+    # -----------------------------------------------------------------
+    # ETAPA 3
+    # AGUÇAMENTO
+    #
+    # Como utilizamos o kernel:
+    #
+    # [ 0  1  0 ]
+    # [ 1 -4  1 ]
+    # [ 0  1  0 ]
+    #
+    # o coeficiente c = -1.
+    #
+    # g = f - laplaciano
+    # -----------------------------------------------------------------
+
+    imagem_float = imagem.astype(np.float32)
+
+    resultado = (
+        imagem_float
+        - laplaciano
+    )
+
+    # -----------------------------------------------------------------
+    # AJUSTE FINAL
+    # -----------------------------------------------------------------
+
+    resultado = np.clip(resultado,0,255
+    )
+
+    fim = time.perf_counter()
+
+    print(
+        f"Tempo Aguçamento Laplaciano: "
+        f"{fim - inicio:.3f} segundos"
+    )
+
+    return resultado.astype(np.uint8)

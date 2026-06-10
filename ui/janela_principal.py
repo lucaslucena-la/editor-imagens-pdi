@@ -15,7 +15,7 @@ from core.gerenciador_imagens import GerenciadorImagens
 from utils.conversoes import cv2_to_qt
 from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste, transformacao_logaritmica, transformacao_exponencial, expansao_contraste
 from processing.reamostragem import redimensionar_vizinho_mais_proximo, redimensionar_bilinear
-from processing.convolucao import  aplicar_box, aplicar_sobel, aplicar_laplaciano, aplicar_mediana, aplicar_gaussiano
+from processing.convolucao import  aplicar_box, aplicar_sobel, aplicar_laplaciano, aplicar_mediana, aplicar_gaussiano, aplicar_agucamento_laplaciano
 from processing.histograma import calcular_histograma, mostrar_histograma, equalizar_histograma
 from ui.dialog_redimensionar import DialogRedimensionar
 from ui.dialog_gaussiano import (DialogGaussiano)
@@ -206,6 +206,16 @@ class JanelaPrincipal(QMainWindow):
 
         # Menu "Filtros"
         menu_filtros = barra_menu.addMenu("Filtros")
+
+        # Submenu "Aguçamento"
+        menu_agucamento = menu_filtros.addMenu("Aguçamento")
+
+        # Ação "Aguçamento Laplaciano"
+        acao_agucamento_laplaciano = QAction("Aguçamento Laplaciano", self)
+        acao_agucamento_laplaciano.triggered.connect(self.aplicar_agucamento_laplaciano)
+
+        # Adiciona a ação "Aguçamento Laplaciano" ao submenu "Aguçamento"
+        menu_agucamento.addAction(acao_agucamento_laplaciano)
 
         # Ação "Filtro Sobel"
         acao_filtro_sobel = QAction("Filtro Sobel", self)
@@ -850,3 +860,40 @@ class JanelaPrincipal(QMainWindow):
             QApplication.restoreOverrideCursor()
 
 
+# ============================================================================ #
+# AGUÇAMENTO
+# ============================================================================ #
+
+    def aplicar_agucamento_laplaciano(self):
+        """
+        Aplica aguçamento utilizando
+        filtro Laplaciano.
+        """
+
+        imagem = (
+            self.gerenciador_imagem
+            .obter_imagem_atual()
+        )
+
+        if imagem is None:
+            return
+
+        QApplication.setOverrideCursor(
+            Qt.WaitCursor
+        )
+
+        try:
+
+            resultado = aplicar_agucamento_laplaciano(
+                imagem
+            )
+
+            self.gerenciador_imagem.imagem_atual = (
+                resultado
+            )
+
+            self.exibir_imagem()
+
+        finally:
+
+            QApplication.restoreOverrideCursor()
