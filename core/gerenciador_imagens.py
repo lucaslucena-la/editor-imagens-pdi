@@ -87,4 +87,3 @@ class GerenciadorImagens:
         """
 
         return self.imagem_atual
-    

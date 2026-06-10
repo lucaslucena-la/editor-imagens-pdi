@@ -32,7 +32,7 @@ def redimensionar_vizinho_mais_proximo(imagem, nova_largura, nova_altura):
         numpy.ndarray: Imagem redimensionada.
     """
 
-    # obtém as dimensões da imagem original
+    # obtém as dimensões da imagem original.    
     altura_original, largura_original = imagem.shape[:2]
 
     # calcula fatores de escala (mesma lógica da versão com loops) 
@@ -45,13 +45,24 @@ def redimensionar_vizinho_mais_proximo(imagem, nova_largura, nova_altura):
     x = np.arange(nova_largura)
     y = np.arange(nova_altura)
 
+    # Se nova_largura = 5 -> x = [0,1,2,3,4]
+    # Se nova_altura = 4 -> y = [0,1,2,3]
+
     # cria a malha de coordenadas (cada posição do destino)
     xx, yy = np.meshgrid(x, y)
+
+    # supondo x = [0 1 2] e y = [0 1]
+    # xx = [[0,1,2],
+    #       [0,1,2]]
+
+    # yy = [[0,0,0],
+    #       [1,1,1]]
 
     # mapeia cada posição do destino para a posição na imagem original
     # broadcasting: xx e yy (matrizes) são multiplicados por escala (escalares)
     x_idx = (xx * escala_x).astype(np.int32)
     y_idx = (yy * escala_y).astype(np.int32)
+
 
     # garante que os índices estejam dentro dos limites
     x_idx = np.clip(x_idx, 0, largura_original - 1)

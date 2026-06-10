@@ -16,6 +16,7 @@ from utils.conversoes import cv2_to_qt
 from processing.intensidade import aplicar_negativo, ajustar_brilho, ajustar_contraste, transformacao_logaritmica, transformacao_exponencial, expansao_contraste
 from processing.reamostragem import redimensionar_vizinho_mais_proximo, redimensionar_bilinear
 from processing.convolucao import  aplicar_box, aplicar_sobel, aplicar_laplaciano, aplicar_mediana, aplicar_gaussiano
+from processing.histograma import calcular_histograma, mostrar_histograma, equalizar_histograma
 from ui.dialog_redimensionar import DialogRedimensionar
 from ui.dialog_gaussiano import (DialogGaussiano)
 from ui.dialog_box import (DialogBox)
@@ -99,6 +100,9 @@ class JanelaPrincipal(QMainWindow):
         # Menu Transformações
         menu_transformacoes = barra_menu.addMenu("Transformações")
 
+        # Menu Histograma
+        menu_histograma = barra_menu.addMenu("Histograma")
+
         # Menu Reamostragem
         menu_reamostragem = barra_menu.addMenu("Reamostragem")
 
@@ -171,6 +175,20 @@ class JanelaPrincipal(QMainWindow):
 
         # Adiciona a ação "Transformação Exponencial" ao menu "Transformações"
         menu_transformacoes.addAction(acao_transformacao_exponencial)
+
+        # adiciona a ação "Mostrar Histograma" ao menu "Histograma"
+        acao_mostrar_histograma = QAction("Mostrar Histograma", self)
+        acao_mostrar_histograma.triggered.connect(self.mostrar_histograma)
+
+        # Adiciona a ação "Mostrar Histograma" ao menu "Histograma"
+        menu_histograma.addAction(acao_mostrar_histograma)
+
+        # adiciona a ação "Equalizar Histograma" ao menu "Histograma"
+        acao_equalizar_histograma = QAction("Equalizar Histograma", self)
+        acao_equalizar_histograma.triggered.connect(self.aplicar_equalizacao_histograma)
+
+        # Adiciona a ação "Equalizar Histograma" ao menu "Histograma"
+        menu_histograma.addAction(acao_equalizar_histograma)
 
         # Ação "Redimensionar (Vizinho mais próximo)"
         acao_redimensionar_vizinho = QAction("Redimensionar (Vizinho mais próximo)", self)
@@ -504,6 +522,71 @@ class JanelaPrincipal(QMainWindow):
 
         self.exibir_imagem()
 
+# ============================================================================ #
+# HISTOGRAMA
+# ============================================================================ #
+
+    def mostrar_histograma(self):
+        """
+        Exibe o histograma da imagem atual.
+        """
+
+        imagem = (self.gerenciador_imagem.obter_imagem_atual())
+
+        if imagem is None:
+            return
+
+        hist_b, hist_g, hist_r = calcular_histograma(imagem)
+
+        altura, largura = imagem.shape[:2]
+
+        print()
+        print("========== TESTE HISTOGRAMA ==========")
+        print("Dimensões:", altura, "x", largura)
+        print("Total esperado:", altura * largura)
+
+        print("Canal B:", hist_b.sum())
+        print("Canal G:", hist_g.sum())
+        print("Canal R:", hist_r.sum())
+        print("======================================")
+        print()
+
+        mostrar_histograma(imagem)
+
+    def aplicar_equalizacao_histograma(self):
+        """
+        Aplica equalização de histograma
+        na imagem atual.
+        """
+
+        imagem = (
+            self.gerenciador_imagem
+            .obter_imagem_atual()
+        )
+
+        if imagem is None:
+            return
+
+        # Mostra cursor de espera
+        QApplication.setOverrideCursor(
+            Qt.WaitCursor
+        )
+
+        try:
+
+            imagem_equalizada = (
+                equalizar_histograma(imagem)
+            )
+
+            self.gerenciador_imagem.imagem_atual = (
+                imagem_equalizada
+            )
+
+            self.exibir_imagem()
+
+        finally:
+
+            QApplication.restoreOverrideCursor()
 # ============================================================================ #
 # REAMOSTRAGEM DE IMAGENS
 # ============================================================================ #
