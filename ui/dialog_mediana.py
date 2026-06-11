@@ -4,7 +4,8 @@ from PyQt5.QtWidgets import (
     QLabel,
     QSpinBox,
     QPushButton,
-    QHBoxLayout
+    QHBoxLayout,
+    QFrame
 )
 
 
@@ -17,16 +18,44 @@ class DialogMediana(QDialog):
     def __init__(self):
         super().__init__()
 
+        # Configurações gerais da janela
         self.setWindowTitle(
             "Filtro Mediana"
         )
+        self.setModal(True)
+        self.setMinimumWidth(360)
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(14)
+
+        # Painel visual com resumo do filtro
+        painel = QFrame()
+        painel.setStyleSheet(
+            "background-color: #ffffff;"
+            "border: 1px solid #d1d5db;"
+            "border-radius: 12px;"
+        )
+
+        layout_painel = QVBoxLayout()
+        layout_painel.setContentsMargins(16, 16, 16, 16)
+        layout_painel.setSpacing(10)
+
+        titulo = QLabel("Configurar Filtro Mediana")
+        titulo.setStyleSheet(
+            "font-size: 16px; font-weight: 700; color: #111827;"
+        )
+
+        descricao = QLabel(
+            "Escolha um kernel ímpar para reduzir ruídos preservando melhor as bordas."
+        )
+        descricao.setWordWrap(True)
+        descricao.setStyleSheet(
+            "font-size: 12px; color: #6b7280;"
+        )
 
         # Campo de tamanho do kernel
-        layout.addWidget(
-            QLabel("Tamanho do Kernel:")
-        )
+        label_kernel = QLabel("Tamanho do Kernel:")
 
         self.spin_kernel = QSpinBox()
 
@@ -34,16 +63,27 @@ class DialogMediana(QDialog):
         self.spin_kernel.setRange(3, 99)
         self.spin_kernel.setSingleStep(2)
         self.spin_kernel.setValue(7)
+        self.spin_kernel.setSuffix(" px")
 
-        layout.addWidget(
-            self.spin_kernel
-        )
+        layout_painel.addWidget(titulo)
+        layout_painel.addWidget(descricao)
+        layout_painel.addWidget(label_kernel)
+        layout_painel.addWidget(self.spin_kernel)
+        painel.setLayout(layout_painel)
+
+        layout.addWidget(painel)
 
         # Botões de confirmação e cancelamento
         botoes = QHBoxLayout()
+        botoes.setSpacing(10)
 
         btn_ok = QPushButton("OK")
         btn_cancelar = QPushButton("Cancelar")
+        btn_cancelar.setStyleSheet(
+            "background-color: #ffffff;"
+            "color: #1f2937;"
+            "border: 1px solid #d1d5db;"
+        )
 
         btn_ok.clicked.connect(
             self.accept
@@ -56,9 +96,7 @@ class DialogMediana(QDialog):
         botoes.addWidget(btn_ok)
         botoes.addWidget(btn_cancelar)
 
-        layout.addLayout(
-            botoes
-        )
+        layout.addLayout(botoes)
 
         self.setLayout(layout)
 

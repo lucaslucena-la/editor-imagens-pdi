@@ -51,7 +51,7 @@ def calcular_histograma(imagem):
     else:  # Imagem em escala de cinza
         hist = np.bincount(imagem.ravel(), minlength=256)
         return hist
-    
+
 def mostrar_histograma(imagem):
     """
     Exibe o histograma da imagem.

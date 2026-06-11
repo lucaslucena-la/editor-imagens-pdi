@@ -118,6 +118,7 @@ def aplicar_sobel(imagem, padding = 'edge'):
     gradiente_x = aplicar_convolucao(imagem, kernel_x, clip=False, padding=padding)
     gradiente_y = aplicar_convolucao(imagem, kernel_y, clip=False, padding=padding)
 
+
     # Calcula a magnitude do gradiente
     resultado = np.sqrt(gradiente_x**2 + gradiente_y**2)
 

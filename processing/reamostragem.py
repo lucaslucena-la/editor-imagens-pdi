@@ -7,15 +7,6 @@ Responsável por:
 """
 
 import numpy as np
-"""
-Algoritmos de reamostragem de imagens.
-
-Responsável por:
-- vizinho mais próximo
-- bilinear
-"""
-
-import numpy as np
 
 def redimensionar_vizinho_mais_proximo(imagem, nova_largura, nova_altura):
     

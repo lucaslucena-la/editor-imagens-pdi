@@ -8,7 +8,6 @@ Responsável por:
 - limiarização
 """
 
-import cv2
 import numpy as np
 
 def aplicar_negativo(imagem):
