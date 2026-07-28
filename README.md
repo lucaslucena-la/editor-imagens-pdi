@@ -19,7 +19,7 @@ Implementar uma ferramenta de edição de imagens inspirada em um Photoshop simp
 - Abrir e salvar imagens
 - Transformações de intensidade
 - Ampliação e redução
-- Filtros espaciais
+- Filtros espaciaiss
 - Suavização
 - Aguçamento
 - Histogramas
