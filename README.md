@@ -13,7 +13,7 @@ Implementar uma ferramenta de edição de imagens inspirada em um Photoshop simp
 - OpenCV
 - NumPy
 - Matplotlib
---
+  
 ## Funcionalidades previstas
 
 - Abrir e salvar imagens
